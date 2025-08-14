@@ -1,0 +1,72 @@
+'use client';
+
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import Swal from 'sweetalert2';
+
+export default function ZaloCaptureOrderPage() {
+  const params = useSearchParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    const zpTransToken = params.get('checksum');
+    const returnCode = params.get('status');
+    const amount = params.get('amount');
+    const jobId = params.get('jobId');       
+
+    // 1) Nếu thanh toán thất bại
+    if (returnCode !== '1') {
+      Swal.fire('Thanh toán ZaloPay thất bại', `Code: ${returnCode}`, 'error')
+        .then(() => window.close());
+      return;
+    }
+
+    // 2) Nếu thành công, query trạng thái đơn từ backend
+    (async () => {
+      try {
+        const txRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/transaction/create`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              transactionId: zpTransToken,
+              jobId: jobId,
+              amount: amount,           // số tiền VND từ response query
+              platformFee: 15000,
+              currency: 'VND',
+              paymentGateway: 'ZaloPay',
+              status: 'COMPLETED',
+              paidAt: new Date().toISOString(),
+            }),
+          }
+        );
+        if (!txRes.ok) {
+          const err = await txRes.json();
+          throw new Error(err.error || 'Lỗi lưu transaction');
+        }
+
+        // 5) Hiển thị thông báo thành công
+        await Swal.fire('Thanh toán ZaloPay thành công!', '', 'success');
+
+        // 6) Chuyển trang cha về lịch sử và đóng popup
+        if (window.opener) {
+          window.opener.location.href = '/history';
+        }
+        window.close();
+      } catch (e: any) {
+        console.error(e);
+        await Swal.fire('Lỗi khi xử lý giao dịch', e.message || '', 'error');
+        if (window.opener) window.opener.location.href = '/history';
+        window.close();
+      }
+    })();
+  }, [params]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p>Đang xử lý kết quả thanh toán ZaloPay…</p>
+    </div>
+  );
+}
