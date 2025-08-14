@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { Smile, Briefcase, Sparkles, MapPin } from 'lucide-react';
+import { Smile, Briefcase, Sparkles } from 'lucide-react';
 import { Header } from '@/components/Header';
 import Footer from '@/components/Footer';
 
