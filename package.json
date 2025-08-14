@@ -45,5 +45,5 @@
     "tw-animate-css": "^1.3.5",
     "typescript": "^5"
   },
-  "proxy": "http://localhost:5000"
+  "proxy": "http://ecprojectbe-production.up.railway.app:5000"
 }
