@@ -60,83 +60,23 @@ interface EnrichedBooking {
     paid_at?: string | null;
 }
 
+interface InfoCardProps {
+    title: string;
+    person: {
+        name: string;
+        avatar_url?: string | null;
+        phone: string;
+    };
+}
+
+interface DetailItemProps {
+    icon: React.ReactNode;
+    label: string;
+    value?: string | null;
+    children?: React.ReactNode;
+}
+
 const dataBookings: EnrichedBooking[] = [];
-//     {
-//         job_id: 101,
-//         customer_id: 1,
-//         tasker_id: 201,
-//         service_id: 'SVC-001',
-//         location: '123 Đường ABC, Phường 1, Quận 1, TP.HCM',
-//         job_status: 'completed',
-//         created_at: '2025-07-28T09:00:00Z',
-//         completed_at: '2025-07-28T11:00:00Z',
-//         noted: 'Máy lạnh ở phòng khách, hơi kêu to.',
-//         customer_name: 'Nguyễn Văn An',
-//         customer_avatar: 'https://placehold.co/40x40/E2E8F0/4A5568?text=A',
-//         customer_phone: '0901234567',
-//         tasker_name: 'Trần Văn Bình',
-//         tasker_avatar: 'https://placehold.co/40x40/2DD4BF/1F2937?text=B',
-//         tasker_phone: '0987654321',
-//         service_name: 'Vệ sinh máy lạnh',
-//         transaction_id: 'TRN-101-MOMO',
-//         amount: 350000,
-//         platform_fee: 35000,
-//         currency: 'VND',
-//         payment_gateway: 'Momo',
-//         transaction_status: 'completed',
-//         paid_at: '2025-07-28T09:05:00Z',
-//     },
-//     {
-//         job_id: 102,
-//         customer_id: 2,
-//         tasker_id: 202,
-//         service_id: 'SVC-002',
-//         location: '456 Đường XYZ, Phường 5, Quận 3, TP.HCM',
-//         job_status: 'in_progress',
-//         created_at: '2025-07-29T14:00:00Z',
-//         completed_at: null,
-//         noted: null,
-//         customer_name: 'Lê Thị Cẩm',
-//         customer_avatar: 'https://placehold.co/40x40/E2E8F0/4A5568?text=C',
-//         customer_phone: '0912345678',
-//         tasker_name: 'Phạm Thị Dung',
-//         tasker_avatar: 'https://placehold.co/40x40/2DD4BF/1F2937?text=D',
-//         tasker_phone: '0978123456',
-//         service_name: 'Dọn dẹp nhà cửa (gói cơ bản)',
-//         transaction_id: 'TRN-102-BANK',
-//         amount: 500000,
-//         platform_fee: 50000,
-//         currency: 'VND',
-//         payment_gateway: 'Bank_Transfer',
-//         transaction_status: 'pending',
-//         paid_at: null,
-//     },
-//     {
-//         job_id: 103,
-//         customer_id: 3,
-//         tasker_id: null,
-//         service_id: 'SVC-003',
-//         location: '789 Đường LMN, Phường 10, Quận 10, TP.HCM',
-//         job_status: 'pending',
-//         created_at: '2025-07-30T11:30:00Z',
-//         completed_at: null,
-//         noted: 'Nhớ giặt khô áo vest.',
-//         customer_name: 'Hoàng Văn Minh',
-//         customer_avatar: 'https://placehold.co/40x40/E2E8F0/4A5568?text=M',
-//         customer_phone: '0934567890',
-//         tasker_name: null,
-//         tasker_avatar: null,
-//         tasker_phone: null,
-//         service_name: 'Giặt ủi cao cấp',
-//         transaction_id: 'TRN-103-PAYPAL',
-//         amount: 250000,
-//         platform_fee: 25000,
-//         currency: 'VND',
-//         payment_gateway: 'Paypal',
-//         transaction_status: 'completed',
-//         paid_at: '2025-07-30T11:32:00Z',
-//     },
-// ];
 
 // --- HELPER COMPONENTS ---
 
@@ -192,7 +132,7 @@ const StatusBadge = ({
     );
 };
 
-const InfoCard = ({ title, person }) => (
+const InfoCard = ({ title, person }: InfoCardProps) => (
     <div>
         <h4 className="text-sm font-semibold text-gray-500 mb-2">{title}</h4>
         <div className="flex items-center gap-4 bg-gray-50 p-3 rounded-lg">
@@ -215,7 +155,7 @@ const InfoCard = ({ title, person }) => (
     </div>
 );
 
-const DetailItem = ({ icon, label, value, children }) => (
+const DetailItem = ({ icon, label, value, children }: DetailItemProps) => (
     <div className="flex items-start gap-3 text-sm">
         <div className="text-gray-500 mt-0.5">{icon}</div>
         <div>
