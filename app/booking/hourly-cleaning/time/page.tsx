@@ -48,15 +48,12 @@ const TimeSelectionPage = () => {
 
     // Khôi phục booking data từ localStorage khi mount
     useEffect(() => {
-        console.log('🚀 [Time] Component mounting, checking localStorage...');
-
         // Check nếu đang navigate từ service page
         if (typeof window !== 'undefined') {
             const urlParams = new URLSearchParams(window.location.search);
             const fromService = urlParams.get('fromService') === 'true';
 
             if (fromService) {
-                console.log('🔗 [Time] Navigation from service page detected, clearing URL params');
                 setFromServicePage(true);
                 // Clear URL params
                 window.history.replaceState({}, '', window.location.pathname);

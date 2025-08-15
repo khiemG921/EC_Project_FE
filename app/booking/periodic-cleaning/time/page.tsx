@@ -7,15 +7,20 @@ import { serviceInfo, weekDays, timeSlots, pricingData } from '../bookingConfig'
 
 const TimeStep = () => {
     const router = useRouter();
-    const saved = localStorage.getItem('periodicBookingData');
-    const saved_json = saved ? JSON.parse(saved) : {};
+    // Helper function to safely access localStorage
+    const getSavedBookingData = () => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('periodicBookingData');
+        }
+        return null;
+    };
     const [bookingData, setBookingData] = useState<any>({
-        address: saved_json.address || '',
-        sessionsPerWeek: saved_json.sessionsPerWeek || 2,
-        hoursPerSession: saved_json.hoursPerSession || 3,
-        extraServices: saved_json.extraServices || [],
-        totalHoursPerSession: saved_json.totalHoursPerSession || 3,
-        schedule: saved_json.schedule || {},
+        address: '',
+        sessionsPerWeek: 2,
+        hoursPerSession: 3,
+        extraServices: [],
+        totalHoursPerSession: 3,
+        schedule: {},
         startDate: new Date(new Date().setDate(new Date().getDate() + 1)),
         packageDuration: 1
     });
@@ -23,10 +28,8 @@ const TimeStep = () => {
     const [validationError, setValidationError] = useState('');
 
     useEffect(() => {
-        const saved = localStorage.getItem('periodicBookingData');
-        // console.log('Recovering bookingData:', saved);
+        const saved = getSavedBookingData();
         if (saved) setBookingData((prev: any) => ({ ...prev, ...JSON.parse(saved) }));
-        // console.log('After recovering bookingData:', bookingData);
     }, []);
     useEffect(() => {
         localStorage.setItem('periodicBookingData', JSON.stringify(bookingData));
