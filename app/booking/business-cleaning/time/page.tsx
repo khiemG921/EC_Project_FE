@@ -18,7 +18,7 @@ const TimeStep = () => {
         startDate: new Date(new Date().setDate(new Date().getDate() + 1)),
         packageDuration: 1
     });
-    const [modal, setModal] = useState({ type: null });
+    const [modal, setModal] = useState<{ type: string | null }>({ type: null });
     const [validationError, setValidationError] = useState('');
 
     useEffect(() => {

@@ -110,8 +110,8 @@ export default function ACTimeStep() {
         return { workDate: '', startTime: '' };
     });
 
-    const [modal, setModal] = useState({ type: null });
-    const openModal = (type) => setModal({ type });
+    const [modal, setModal] = useState<{ type: string | null }>({ type: null });
+    const openModal = (type: string) => setModal({ type });
     const closeModal = () => setModal({ type: null });
     useEffect(() => {
         if (typeof window !== 'undefined') {

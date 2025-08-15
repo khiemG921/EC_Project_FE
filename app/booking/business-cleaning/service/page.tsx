@@ -101,7 +101,7 @@ const ServiceStep = () => {
             <PriceListModal
                 isOpen={modal.type === 'price'}
                 onClose={() => setModal({ type: null })}
-                title={modal.title}
+                title={modal.title ?? ''}
                 items={modal.data?.items}
                 prices={modal.data?.prices}
             />

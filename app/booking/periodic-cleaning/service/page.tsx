@@ -7,7 +7,18 @@ import { serviceInfo, pricingData } from '../bookingConfig';
 
 const ServiceStep = () => {
     const router = useRouter();
-    const [bookingData, setBookingData] = useState({
+    interface BookingData {
+        address: string;
+        sessionsPerWeek: number;
+        hoursPerSession: number;
+        extraServices: number[];
+        totalHoursPerSession: number;
+        schedule: Record<string, unknown>;
+        startDate: Date;
+        packageDuration: number;
+    }
+    
+    const [bookingData, setBookingData] = useState<BookingData>({
         address: '',
         sessionsPerWeek: 2,
         hoursPerSession: 3,
@@ -17,7 +28,7 @@ const ServiceStep = () => {
         startDate: new Date(new Date().setDate(new Date().getDate() + 1)),
         packageDuration: 1,
     });
-    const [modal, setModal] = useState({ type: null });
+    const [modal, setModal] = useState<{ type: string | null }>({ type: null });
 
     useEffect(() => {
         // Restore from localStorage if exists

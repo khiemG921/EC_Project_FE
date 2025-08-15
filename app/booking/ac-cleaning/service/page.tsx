@@ -5,6 +5,40 @@ import { useRouter } from 'next/navigation';
 import React, { useState, useMemo, useEffect } from 'react';
 import BookingLayout, * as BookingLayout_1 from '../../../../components/booking/BookingLayout';
 
+interface PricingOption {
+    id: number;
+    service_id: number;
+    type: string;
+    name: string;
+    duration: number;
+    image?: string;
+    description?: string;
+}
+
+interface BookingData {
+    address: string;
+    acType: 'Treo tường' | 'Tủ đứng' | 'Âm trần';
+    selectedItems: Record<number, { quantity: number; addGas: boolean }>;
+    voucher_code: string;
+}
+
+interface SelectionFormProps {
+    bookingData: BookingData;
+    setBookingData: React.Dispatch<React.SetStateAction<BookingData>>;
+    openModal: (type: string) => void;
+}
+
+interface AccordionItemProps {
+    item: PricingOption;
+    bookingData: BookingData;
+    setBookingData: React.Dispatch<React.SetStateAction<BookingData>>;
+}
+
+interface AddressSelectionFormProps {
+    bookingData: BookingData;
+    setBookingData: React.Dispatch<React.SetStateAction<BookingData>>;
+}
+
 const serviceId = 5;
 const serviceInfo = { id: 5, name: 'Vệ sinh Máy lạnh' };
 const allPricingOptions = [
@@ -43,7 +77,7 @@ const allPricingOptions = [
     },
     { id: 42, service_id: 5, type: 'Phụ phí', name: 'Bơm gas', duration: 0.5 },
 ];
-const acOptions = {
+const acOptions: Record<'Treo tường' | 'Tủ đứng' | 'Âm trần', PricingOption[]> = {
     'Treo tường': allPricingOptions.filter((p) => p.type === 'Treo tường'),
     'Tủ đứng': allPricingOptions.filter((p) => p.type === 'Tủ đứng'),
     'Âm trần': allPricingOptions.filter((p) => p.type === 'Âm trần'),
@@ -52,10 +86,7 @@ const acOptions = {
 function AddressSelectionForm({
     bookingData,
     setBookingData,
-}: {
-    bookingData: { address: string /* … */ };
-    setBookingData: React.Dispatch<any>;
-}) {
+}: AddressSelectionFormProps) {
     const [isOpen, setIsOpen] = useState(false);
 
     const handleConfirmAddress = (fullAddress: string) => {
@@ -99,11 +130,7 @@ function AccordionItem({
     item,
     bookingData,
     setBookingData,
-}: {
-    item: any;
-    bookingData: any;
-    setBookingData: any;
-}) {
+}: AccordionItemProps) {
     const [isOpen, setIsOpen] = useState(false);
     const id = item.id;
     const currentItem = bookingData.selectedItems[id] || {
@@ -197,11 +224,7 @@ function SelectionForm({
     bookingData,
     setBookingData,
     openModal,
-}: {
-    bookingData: any;
-    setBookingData: any;
-    openModal: any;
-}) {
+}: SelectionFormProps) {
     const { acType } = bookingData;
     const currentOptions = acOptions[acType] || [];
     return (
@@ -294,12 +317,7 @@ function SelectionForm({
 
 export default function ACCleaningServicePage() {
     const router = useRouter();
-    const [bookingData, setBookingData] = useState<{
-        address: string;
-        acType: string;
-        selectedItems: Record<number, { quantity: number; addGas: boolean }>;
-        voucher_code: string;
-    }>({
+    const [bookingData, setBookingData] = useState<BookingData>({
         address: '',
         acType: 'Treo tường',
         selectedItems: {},

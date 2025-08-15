@@ -79,7 +79,7 @@ const ConfirmStep = () => {
             localStorage.setItem('selectedPromoCode', promoFromQuery);
             setPromoCode(promoFromQuery);
             if (isDataRestored) {
-                setBookingData((prev) => ({
+                setBookingData((prev: any) => ({
                     ...prev,
                     promoCode: promoFromQuery,
                 }));
@@ -87,7 +87,7 @@ const ConfirmStep = () => {
             }
         } else if (savedPromoCode && isDataRestored) {
             setPromoCode(savedPromoCode);
-            setBookingData((prev) => ({ ...prev, promoCode: savedPromoCode }));
+            setBookingData((prev: any) => ({ ...prev, promoCode: savedPromoCode }));
         }
     }, [isDataRestored]);
 
@@ -135,7 +135,7 @@ const ConfirmStep = () => {
     const extraConfig = getExtraServicesWithPrices(bookingData.extraServices);
     const extraServicesWithPrices =
         checkoutResult?.breakdown?.filter((item: any) =>
-            extraConfig.some((e) => e.name === item.name)
+            extraConfig.some((e) => e?.name === item.name)
         ) || [];
 
     const goToPromo = () => {

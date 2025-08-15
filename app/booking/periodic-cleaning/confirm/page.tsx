@@ -61,7 +61,7 @@ const ConfirmStep = () => {
 
             // Chờ cho booking data được restore xong
             if (isDataRestored) {
-                setBookingData((prev) => {
+                setBookingData((prev: any) => {
                     console.log(
                         'Updating booking data with promo:',
                         promoFromQuery
@@ -75,7 +75,7 @@ const ConfirmStep = () => {
         } else if (savedPromoCode && isDataRestored) {
             console.log('Update voucher localStorage:', savedPromoCode);
             setPromoCode(savedPromoCode);
-            setBookingData((prev) => ({ ...prev, promoCode: savedPromoCode }));
+            setBookingData((prev: any) => ({ ...prev, promoCode: savedPromoCode }));
         }
     }, [isDataRestored]); // Chạy lại khi isDataRestored thay đổi
 
@@ -116,8 +116,8 @@ const ConfirmStep = () => {
     const extraConfig = getExtraServicesWithPrices(bookingData.extraServices);
     // Lấy các mục từ breakdown (API) có name khớp với dịch vụ thêm đã chọn
     const extraServicesWithPrices =
-        checkoutResult?.breakdown?.filter((item) =>
-            extraConfig.some((e) => e.name === item.name)
+        checkoutResult?.breakdown?.filter((item: any) =>
+            extraConfig.some((e) => e?.name === item.name)
         ) || [];
 
 
