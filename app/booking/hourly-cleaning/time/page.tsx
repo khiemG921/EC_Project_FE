@@ -48,6 +48,7 @@ const TimeSelectionPage = () => {
 
     // Khôi phục booking data từ localStorage khi mount
     useEffect(() => {
+
         // Check nếu đang navigate từ service page
         if (typeof window !== 'undefined') {
             const urlParams = new URLSearchParams(window.location.search);

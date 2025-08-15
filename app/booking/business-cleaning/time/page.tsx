@@ -7,17 +7,27 @@ import { serviceInfo, weekDays, timeSlots, pricingData } from '../bookingConfig'
 
 const TimeStep = () => {
     const router = useRouter();
-    const saved = localStorage.getItem('businessBookingData');
-    const saved_json = saved ? JSON.parse(saved) : {};
-    const [bookingData, setBookingData] = useState<any>({
-        address: saved_json.address || '',
-        sessionsPerWeek: saved_json.sessionsPerWeek || 2,
-        selectedServices: saved_json.selectedServices || [],
-        area: saved_json.area || 0,
-        schedule: saved_json.schedule || {},
-        startDate: new Date(new Date().setDate(new Date().getDate() + 1)),
-        packageDuration: 1
+    // Helper function to safely access localStorage
+    const getSavedBookingData = () => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('businessBookingData');
+            return saved ? JSON.parse(saved) : {};
+        }
+        return {};
+    };
+    const [bookingData, setBookingData] = useState<any>(() => {
+        const saved_json = getSavedBookingData();
+        return {
+            address: saved_json.address || '',
+            sessionsPerWeek: saved_json.sessionsPerWeek || 2,
+            selectedServices: saved_json.selectedServices || [],
+            area: saved_json.area || 0,
+            schedule: saved_json.schedule || {},
+            startDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+            packageDuration: 1
+        };
     });
+    
     const [modal, setModal] = useState<{ type: string | null }>({ type: null });
     const [validationError, setValidationError] = useState('');
 
