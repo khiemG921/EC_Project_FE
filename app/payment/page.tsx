@@ -32,6 +32,7 @@ declare global {
 export default function PaymentPage() {
     const [amount, setAmount] = useState<number>(0);
     const [jobId, setJobId] = useState<number | null>(null);
+    const [voucherCode, setVoucherCode] = useState<string | null>(null);
     const [platformFee] = useState<number>(15000);
     const [selectedPaymentMethod, setSelectedPaymentMethod] =
         useState<string>('');
@@ -58,6 +59,7 @@ export default function PaymentPage() {
             const paymentInfo = JSON.parse(paymentInfoString);
             setAmount(paymentInfo.totalPrice);
             setJobId(paymentInfo.jobId);
+            setVoucherCode(paymentInfo.voucher_code || null);
         } else {
             // Xử lý trường hợp không tìm thấy thông tin thanh toán
             alert('Không tìm thấy thông tin thanh toán.');
