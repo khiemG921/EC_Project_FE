@@ -85,7 +85,13 @@ const Modal = ({ children, onClose }: ModalProps) => (
 );
 
 // --- News Article Form Component ---
-const NewsArticleForm = ({ initialData, onSubmit, onCancel }) => {
+interface NewsArticleFormProps {
+    initialData: NewsArticle | null;
+    onSubmit: (data: NewsArticle) => void;
+    onCancel: () => void;
+}
+
+const NewsArticleForm = ({ initialData, onSubmit, onCancel }: NewsArticleFormProps) => {
     const [formData, setFormData] = useState(
         initialData || {
             news_id: 0,
@@ -138,7 +144,7 @@ const NewsArticleForm = ({ initialData, onSubmit, onCancel }) => {
             </div>
             <div>
                 <label htmlFor="image_url" className="block text-sm font-medium text-gray-700 mb-1">URL Hình ảnh</label>
-                <input id="image_url" name="image_url" type="text" value={formData.image_url} onChange={handleChange} placeholder="https://example.com/image.jpg" className="w-full p-2 border rounded-lg text-gray-700 focus:ring-cyan-500 focus:border-cyan-500" />
+                <input id="image_url" name="image_url" type="text" value={formData.image_url || ''} onChange={handleChange} placeholder="https://example.com/image.jpg" className="w-full p-2 border rounded-lg text-gray-700 focus:ring-cyan-500 focus:border-cyan-500" />
             </div>
             <div>
                 <label htmlFor="source" className="block text-sm font-medium text-gray-700 mb-1">Nguồn</label>
