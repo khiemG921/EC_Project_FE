@@ -21,15 +21,20 @@ const serviceInfo = { id: 1, name: "Giúp Việc Ca Lẻ" };
 const TimeSelectionPage = () => {
     const router = useRouter();
     
-    const savedBookingData = localStorage.getItem('hourlyBookingData');
-    const recoveredData = savedBookingData ? JSON.parse(savedBookingData) : null;
+    // Helper function to safely access localStorage
+    const getSavedBookingData = () => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('hourlyBookingData');
+        }
+        return null;
+    };
     const [bookingData, setBookingData] = useState({
-        staffCount: recoveredData?.staffCount || 1,
-        durationId: recoveredData?.durationId || 2,
-        address: recoveredData?.address || '',
-        selectedOptionIds: recoveredData?.selectedOptionIds || [99],
-        notes: recoveredData?.notes || '',
-        promoCode: recoveredData?.promoCode || '',
+        staffCount: 1,
+        durationId: 2,
+        address: '',
+        selectedOptionIds: [99],
+        notes: '',
+        promoCode: '',
         workDate: null as Date | null,
         startTime: '',
     });
@@ -46,48 +51,54 @@ const TimeSelectionPage = () => {
         console.log('🚀 [Time] Component mounting, checking localStorage...');
 
         // Check nếu đang navigate từ service page
-        const urlParams = new URLSearchParams(window.location.search);
-        const fromService = urlParams.get('fromService') === 'true';
+        if (typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromService = urlParams.get('fromService') === 'true';
 
-        if (fromService) {
-            console.log('🔗 [Time] Navigation from service page detected, clearing URL params');
-            setFromServicePage(true);
-            // Clear URL params
-            window.history.replaceState({}, '', window.location.pathname);
-        }
+            if (fromService) {
+                console.log('🔗 [Time] Navigation from service page detected, clearing URL params');
+                setFromServicePage(true);
+                // Clear URL params
+                window.history.replaceState({}, '', window.location.pathname);
+            }
 
-        if (savedBookingData) {
-            try {
-                const parsed = JSON.parse(savedBookingData);
-                console.log('Khôi phục dữ liệu từ localStorage:', parsed);
-                if (parsed.workDate) {
-                    parsed.workDate = new Date(parsed.workDate);
+            const savedBookingData = getSavedBookingData();
+            if (savedBookingData) {
+                try {
+                    const parsed = JSON.parse(savedBookingData);
+                    console.log('Khôi phục dữ liệu từ localStorage:', parsed);
+                    if (parsed.workDate) {
+                        parsed.workDate = new Date(parsed.workDate);
+                    }
+                    setBookingData(parsed);
+
+                    // Đợi một chút để đảm bảo setState xong
+                    setTimeout(() => {
+                        console.log('Data restored, setting flag');
+                        setIsDataRestored(true);
+                    }, fromService ? 200 : 50); // Delay lâu hơn nếu từ service page
+                } catch (error) {
+                    console.error('Error parsing saved booking data:', error);
+                    setIsDataRestored(false);
                 }
-                setBookingData(parsed);
-
-                // Đợi một chút để đảm bảo setState xong
-                setTimeout(() => {
-                    console.log('Data restored, setting flag');
-                    setIsDataRestored(true);
-                }, fromService ? 200 : 50); // Delay lâu hơn nếu từ service page
-            } catch (error) {
-                console.error('Error parsing saved booking data:', error);
-                setIsDataRestored(false);
+            } else {
+                console.log('No saved data found');
+                // Nếu không có data và không phải từ service page thì có thể redirect
+                if (!fromService) {
+                    console.log('No data and not from service, should redirect');
+                }
+                setIsDataRestored(true);
             }
         } else {
-            console.log('No saved data found');
-            // Nếu không có data và không phải từ service page thì có thể redirect
-            if (!fromService) {
-                console.log('No data and not from service, should redirect');
-            }
+            // Server-side: just set flag to true
             setIsDataRestored(true);
         }
     }, []);
 
     // Validation logic - chỉ chạy sau khi đã restore
     useEffect(() => {
-        if (!isDataRestored) {
-            console.log('Data not restored yet, skipping validation');
+        if (!isDataRestored || typeof window === 'undefined') {
+            console.log('Data not restored yet or server-side, skipping validation');
             return;
         }
 
@@ -138,8 +149,9 @@ const TimeSelectionPage = () => {
 
     // Lưu booking data vào localStorage mỗi khi thay đổi
     useEffect(() => {
-        console.log('Saving booking data to localStorage:', bookingData);
-        localStorage.setItem('hourlyBookingData', JSON.stringify(bookingData));
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('hourlyBookingData', JSON.stringify(bookingData));
+        }
     }, [bookingData]);
 
     // Gọi checkout API
