@@ -20,7 +20,7 @@ interface BookingData {
 }
 
 interface CheckoutResult {
-    breakdown?: { name: string; subTotal: number }[];
+    breakdown?: { name: string; multiplier: number; subTotal: number }[];
     totalPrice?: number;
     discount?: number;
 }
