@@ -6,6 +6,27 @@ import { useUser } from '@/hooks/useUser';
 import DashboardHeader from '@/components/common/DashboardHeader';
 import Swal from 'sweetalert2';
 
+// Declare PayPal types for TypeScript
+declare global {
+    interface Window {
+        paypal?: {
+            Buttons: (options: {
+                style?: {
+                    shape?: string;
+                    layout?: string;
+                    color?: string;
+                    label?: string;
+                };
+                createOrder: () => Promise<string>;
+                onApprove: (data: any, actions: any) => Promise<void>;
+                onError: (err: any) => void;
+            }) => {
+                render: (selector: string) => void;
+            };
+        };
+    }
+}
+
 // --- Component chính của trang Thanh toán ---
 export default function PaymentPage() {
     const [amount, setAmount] = useState<number>(0);

@@ -312,7 +312,7 @@ export const AddressModal = ({ isOpen, onClose, onConfirm }: { isOpen: boolean, 
                         {/* Footer chứa nút xác nhận, luôn hiển thị trên cùng */}
                         <div className="p-4 bg-white border-t">
                             <button
-                                onClick={handleSelectOnMap}
+                                onClick={() => handleSelectOnMap()}
                                 className="w-full px-6 py-3 bg-teal-500 text-white font-bold rounded-lg shadow-lg"
                             >
                                 Xác nhận vị trí này
@@ -449,7 +449,7 @@ export const QuantitySelector = ({ item, quantity, setQuantity }: { item: any, q
 
 // ---------------------- PROCESS MODAL ----------------------
 // Modal hiển thị quy trình vệ sinh máy lạnh
-export const ProcessModal = ({ isOpen, onClose, acType }: { isOpen: boolean, onClose: () => void, acType: string }) => {
+export const ProcessModal = ({ isOpen, onClose, acType }: { isOpen: boolean, onClose: () => void, acType: 'Treo tường' | 'Tủ đứng' | 'Âm trần' }) => {
     if (!isOpen) return null;
 
     const processContent = {
@@ -587,7 +587,7 @@ export const CalendarModal = ({
             
         return days;
     };
-    const changeMonth = (offset) => { setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + offset, 1)); };
+    const changeMonth = (offset: number) => { setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + offset, 1)); };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
