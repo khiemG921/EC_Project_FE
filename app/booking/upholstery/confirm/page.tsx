@@ -1,6 +1,6 @@
 // app/booking/upholstery/confirm/page.tsx
 'use client';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, Suspense } from 'react';
 import BookingLayout from '../../../../components/booking/BookingLayout';
 import { serviceInfo, allPricingOptions } from '../bookingConfig';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -24,7 +24,7 @@ interface CheckoutResult {
     totalPrice?: number;
 }
 
-export default function UpholsteryConfirmStep() {
+function UpholsteryConfirmContent() {
     const router = useRouter();
     // For demo: get bookingData from localStorage or query (should use context/global state in real app)
     const [bookingData, setBookingData] = useState<BookingData>(() => {
@@ -223,5 +223,17 @@ export default function UpholsteryConfirmStep() {
                 </div>
             </div>
         </BookingLayout>
+    );
+}
+
+export default function UpholsteryConfirmStep() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500" />
+            </div>
+        }>
+            <UpholsteryConfirmContent />
+        </Suspense>
     );
 }

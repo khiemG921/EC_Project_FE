@@ -6,7 +6,6 @@ import Swal from 'sweetalert2';
 
 function ZaloCaptureOrderContent() {
     const params = useSearchParams();
-    const router = useRouter();
 
     useEffect(() => {
         const zpTransToken = params.get('checksum');

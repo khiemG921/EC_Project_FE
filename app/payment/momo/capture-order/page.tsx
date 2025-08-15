@@ -1,9 +1,9 @@
 'use client';
 import { useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import Swal from 'sweetalert2';
 
-export default function MomoCaptureOrderPage() {
+function MomoCaptureOrderContent() {
     const params = useSearchParams();
 
     useEffect(() => {
@@ -83,5 +83,19 @@ export default function MomoCaptureOrderPage() {
         <div className="min-h-screen flex items-center justify-center">
             <p>Đang xử lý thanh toán MoMo…</p>
         </div>
+    );
+}
+
+export default function MomoCaptureOrderPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="min-h-screen flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500" />
+                </div>
+            }
+        >
+            <MomoCaptureOrderContent />
+        </Suspense>
     );
 }

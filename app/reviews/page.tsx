@@ -1,10 +1,11 @@
 'use client'; // This is a client component
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Star, Heart, User, Send, Loader2, X } from 'lucide-react';
 import { Header } from '@/components/Header';
 import Footer from '@/components/Footer';
+
 
 interface Service {
   id: number;
@@ -67,7 +68,7 @@ const CustomModal = ({ message, onClose }: { message: string; onClose: () => voi
   );
 };
 
-export default function ServiceDetail() {
+function ServiceDetailContent() {
   const searchParams = useSearchParams();
   const serviceId = searchParams.get('serviceId');
   const API_BASE_URL = 'http://localhost:5000/api';
@@ -77,7 +78,6 @@ export default function ServiceDetail() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [modalMessage, setModalMessage] = useState<string | null>(null);
-
 
   const [reviewRating, setReviewRating] = useState<number>(0);
   const [reviewDetail, setReviewDetail] = useState<string>('');
@@ -92,7 +92,7 @@ export default function ServiceDetail() {
     roles: ['customer'], 
     avatar_url: 'https://placehold.co/40x40/f4f4f4/000000?text=C' 
   };
-  const [favoriteIds, setFavoriteIds] = useState<number[]>([]); // Đã đổi thành number[]
+  const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
   const user = MOCK_LOGGED_IN ? MOCK_USER : null;
 
   useEffect(() => {
@@ -147,7 +147,7 @@ export default function ServiceDetail() {
     
     const newReviewData = {
       customer_id: user.customer_id,
-      job_id: Math.floor(Math.random() * 1000), // Giả lập job_id, bạn cần thay bằng ID thật
+      job_id: Math.floor(Math.random() * 1000),
       service_id: parseInt(serviceId as string, 10),
       rating_job: reviewRating,
       rating_tasker: reviewRating,
@@ -168,10 +168,8 @@ export default function ServiceDetail() {
         }
 
         const result = await response.json();
-        // Giả sử API trả về review mới
         const createdReview = { ...newReviewData, review_id: result.review_id || Date.now(), Customer: MOCK_USER };
         
-        // Thêm review mới vào đầu danh sách
         setReviews((prev) => [createdReview, ...prev]);
         setReviewRating(0);
         setReviewDetail('');
@@ -185,7 +183,7 @@ export default function ServiceDetail() {
     }
   };
 
-  const isFavorite = serviceId ? favoriteIds.includes(parseInt(serviceId as string, 10)) : false; // Đã sửa
+  const isFavorite = serviceId ? favoriteIds.includes(parseInt(serviceId as string, 10)) : false;
   const handleToggleFavorite = () => {
     if (!user) {
       setModalMessage('Vui lòng đăng nhập để sử dụng chức năng này.');
@@ -225,7 +223,6 @@ export default function ServiceDetail() {
 
   return (
     <>
-      
       <Header />
 
       {/* main với padding-top để tránh header sticky che nội dung */}
@@ -251,13 +248,11 @@ export default function ServiceDetail() {
             <div className="p-8">
               <h1 className="text-5xl font-extrabold text-gray-900 mb-4">{service?.name || 'Dịch vụ'}</h1>
               <div className="flex items-center text-yellow-500 mb-6">
-                {/* Giả định rating được tính toán hoặc lấy từ dữ liệu backend */}
                 <span className="text-3xl font-bold mr-2">4.8</span>
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} size={28} fill={i < 5 ? '#f59e0b' : 'none'} strokeWidth={1} />
                 ))}
               </div>
-              {/* Sử dụng dữ liệu giá từ API mới */}
               <p className="text-3xl font-bold text-green-600 mb-6">{service?.price_from ? service.price_from.toLocaleString('vi-VN') + ' VND' : 'Đang cập nhật'} / {service?.duration || '...'}</p>
               <div className="prose max-w-none text-gray-700">
                 <h2 className="text-2xl font-bold text-gray-800 mt-8 mb-4">Mô tả dịch vụ</h2>
@@ -363,5 +358,17 @@ export default function ServiceDetail() {
       {modalMessage && <CustomModal message={modalMessage} onClose={() => setModalMessage(null)} />}
       <Footer />
     </>
+  );
+}
+
+export default function ServiceDetail() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <Loader2 className="animate-spin text-teal-500" size={48} />
+      </div>
+    }>
+      <ServiceDetailContent />
+    </Suspense>
   );
 }
