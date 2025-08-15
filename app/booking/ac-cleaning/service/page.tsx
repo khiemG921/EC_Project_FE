@@ -377,7 +377,7 @@ export default function ACCleaningServicePage() {
 
             <BookingLayout
                 title="Vệ sinh Máy lạnh"
-                onBack={() => router.push('//#services')}
+                onBack={() => router.push('/')}
                 footer={
                     totalDuration > 0 && (
                         <button

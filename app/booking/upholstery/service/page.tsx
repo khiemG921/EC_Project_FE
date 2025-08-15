@@ -77,7 +77,7 @@ export default function UpholsteryServiceStep() {
             />
             <BookingLayout
                 title={serviceInfo.name}
-                onBack={() => router.push('/dashboard')}
+                onBack={() => router.push('/')}
                 footer={
                     <button
                         onClick={handleNext}

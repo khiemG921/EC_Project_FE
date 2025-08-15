@@ -108,11 +108,11 @@ const ServiceStep = () => {
 
             <BookingLayout
                 title="Vệ sinh Công nghiệp - Bước 1: Dịch vụ"
-                onBack={() => router.push('/dashboard')}
+                onBack={() => router.push('/')}
                 footer={
                     <button
                         onClick={handleNext}
-                        disabled={!bookingData.address || bookingData.area <= 0}
+                        disabled={!bookingData.address || bookingData.area <= 0 || bookingData.selectedServices.length === 0}
                         className="px-8 py-3 rounded-lg bg-teal-500 text-white font-bold w-full mt-4 disabled:bg-slate-300 disabled:cursor-not-allowed"
                     >
                         Tiếp tục

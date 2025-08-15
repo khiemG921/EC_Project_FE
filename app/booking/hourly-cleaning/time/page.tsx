@@ -2,25 +2,64 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import BookingLayout, { TimePickerModal } from '../../../../components/booking/BookingLayout';
+import BookingLayout, {
+    TimePickerModal,
+} from '../../../../components/booking/BookingLayout';
 import { useRouter } from 'next/navigation';
 
 // --- DỮ LIỆU DỊCH VỤ ---
 const allPricingOptions = [
-    { id: 1, service_id: 1, type: "Thời Lượng", name: "2 Giờ - Tối đa 60m^2", hours: 2 },
-    { id: 2, service_id: 1, type: "Thời Lượng", name: "3 Giờ - Tối đa 90m^2", hours: 3 },
-    { id: 3, service_id: 1, type: "Thời Lượng", name: "4 Giờ - Tối đa 110m^2", hours: 4 },
-    { id: 4, service_id: 1, type: "Tùy Chọn", name: "Sử dụng máy hút bụi" },
-    { id: 99, service_id: 1, type: "Tùy Chọn", name: "Dụng cụ & Chất tẩy rửa cơ bản" },
-    { id: 5, service_id: 1, type: "Dịch Vụ Thêm", name: "Nấu ăn", hours: 1, icon: "fas fa-utensils" },
-    { id: 6, service_id: 1, type: "Dịch Vụ Thêm", name: "Giặt ủi", hours: 1, icon: "fas fa-tshirt" },
+    {
+        id: 1,
+        service_id: 1,
+        type: 'Thời Lượng',
+        name: '2 Giờ - Tối đa 60m^2',
+        hours: 2,
+    },
+    {
+        id: 2,
+        service_id: 1,
+        type: 'Thời Lượng',
+        name: '3 Giờ - Tối đa 90m^2',
+        hours: 3,
+    },
+    {
+        id: 3,
+        service_id: 1,
+        type: 'Thời Lượng',
+        name: '4 Giờ - Tối đa 110m^2',
+        hours: 4,
+    },
+    { id: 4, service_id: 1, type: 'Tùy Chọn', name: 'Sử dụng máy hút bụi' },
+    {
+        id: 99,
+        service_id: 1,
+        type: 'Tùy Chọn',
+        name: 'Dụng cụ & Chất tẩy rửa cơ bản',
+    },
+    {
+        id: 5,
+        service_id: 1,
+        type: 'Dịch Vụ Thêm',
+        name: 'Nấu ăn',
+        hours: 1,
+        icon: 'fas fa-utensils',
+    },
+    {
+        id: 6,
+        service_id: 1,
+        type: 'Dịch Vụ Thêm',
+        name: 'Giặt ủi',
+        hours: 1,
+        icon: 'fas fa-tshirt',
+    },
 ];
 
-const serviceInfo = { id: 1, name: "Giúp Việc Ca Lẻ" };
+const serviceInfo = { id: 1, name: 'Giúp Việc Ca Lẻ' };
 
 const TimeSelectionPage = () => {
     const router = useRouter();
-    
+
     // Helper function to safely access localStorage
     const getSavedBookingData = () => {
         if (typeof window !== 'undefined') {
@@ -41,14 +80,38 @@ const TimeSelectionPage = () => {
 
     const [checkoutResult, setCheckoutResult] = useState<any>(null);
     const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
-    const [dates, setDates] = useState<Array<{ fullDate: Date, day: number, dayName: string }>>([]);
+    const [dates, setDates] = useState<
+        Array<{ fullDate: Date; day: number; dayName: string }>
+    >([]);
     const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
     const [isDataRestored, setIsDataRestored] = useState(false);
     const [fromServicePage, setFromServicePage] = useState(false);
 
+    // chỉ cho phép footer khi workDate >= hôm nay và startTime >= giờ hiện tại nếu là hôm nay
+    const canContinue = useMemo(() => {
+        if (!bookingData.workDate || !bookingData.startTime) return false;
+        const now = new Date();
+        const today = new Date(now);
+        today.setHours(0, 0, 0, 0);
+
+        const selectedDate = new Date(bookingData.workDate);
+        selectedDate.setHours(0, 0, 0, 0);
+        // ngày chọn trước hôm nay => không cho tiếp tục
+        if (selectedDate < today) return false;
+
+        // nếu chọn ngày hôm nay, thì kiểm tra giờ bắt đầu >= giờ hiện tại
+        if (selectedDate.getTime() === today.getTime()) {
+            const [h, m] = bookingData.startTime.split(':').map(Number);
+            const selectedDateTime = new Date(bookingData.workDate);
+            selectedDateTime.setHours(h, m, 0, 0);
+            if (selectedDateTime < now) return false;
+        }
+
+        return true;
+    }, [bookingData.workDate, bookingData.startTime]);
+
     // Khôi phục booking data từ localStorage khi mount
     useEffect(() => {
-
         // Check nếu đang navigate từ service page
         if (typeof window !== 'undefined') {
             const urlParams = new URLSearchParams(window.location.search);
@@ -71,10 +134,13 @@ const TimeSelectionPage = () => {
                     setBookingData(parsed);
 
                     // Đợi một chút để đảm bảo setState xong
-                    setTimeout(() => {
-                        console.log('Data restored, setting flag');
-                        setIsDataRestored(true);
-                    }, fromService ? 200 : 50); // Delay lâu hơn nếu từ service page
+                    setTimeout(
+                        () => {
+                            console.log('Data restored, setting flag');
+                            setIsDataRestored(true);
+                        },
+                        fromService ? 200 : 50
+                    ); // Delay lâu hơn nếu từ service page
                 } catch (error) {
                     console.error('Error parsing saved booking data:', error);
                     setIsDataRestored(false);
@@ -83,7 +149,9 @@ const TimeSelectionPage = () => {
                 console.log('No saved data found');
                 // Nếu không có data và không phải từ service page thì có thể redirect
                 if (!fromService) {
-                    console.log('No data and not from service, should redirect');
+                    console.log(
+                        'No data and not from service, should redirect'
+                    );
                 }
                 setIsDataRestored(true);
             }
@@ -96,7 +164,9 @@ const TimeSelectionPage = () => {
     // Validation logic - chỉ chạy sau khi đã restore
     useEffect(() => {
         if (!isDataRestored || typeof window === 'undefined') {
-            console.log('Data not restored yet or server-side, skipping validation');
+            console.log(
+                'Data not restored yet or server-side, skipping validation'
+            );
             return;
         }
 
@@ -106,7 +176,7 @@ const TimeSelectionPage = () => {
                 address: bookingData.address,
                 durationId: bookingData.durationId,
                 isDataRestored,
-                fromServicePage
+                fromServicePage,
             });
 
             // Chỉ chạy validation nếu không phải từ service page
@@ -124,7 +194,13 @@ const TimeSelectionPage = () => {
         }, 100);
 
         return () => clearTimeout(timeout);
-    }, [isDataRestored, bookingData.address, bookingData.durationId, router, fromServicePage]);
+    }, [
+        isDataRestored,
+        bookingData.address,
+        bookingData.durationId,
+        router,
+        fromServicePage,
+    ]);
 
     // Setup dates
     useEffect(() => {
@@ -136,19 +212,30 @@ const TimeSelectionPage = () => {
             return {
                 fullDate: date,
                 day: date.getDate(),
-                dayName: i === 0 ? 'H.nay' : i === 1 ? 'N.mai' : weekDays[date.getDay()],
+                dayName:
+                    i === 0
+                        ? 'H.nay'
+                        : i === 1
+                        ? 'N.mai'
+                        : weekDays[date.getDay()],
             };
         });
         setDates(next7Days);
         if (!bookingData.workDate) {
-            setBookingData(prev => ({ ...prev, workDate: next7Days[1].fullDate })); // Default to tomorrow
+            setBookingData((prev) => ({
+                ...prev,
+                workDate: next7Days[1].fullDate,
+            })); // Default to tomorrow
         }
     }, []);
 
     // Lưu booking data vào localStorage mỗi khi thay đổi
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            localStorage.setItem('hourlyBookingData', JSON.stringify(bookingData));
+            localStorage.setItem(
+                'hourlyBookingData',
+                JSON.stringify(bookingData)
+            );
         }
     }, [bookingData]);
 
@@ -158,7 +245,9 @@ const TimeSelectionPage = () => {
             const timeoutId = setTimeout(async () => {
                 setIsCheckoutLoading(true);
                 try {
-                    const durationObj = allPricingOptions.find(d => d.id === bookingData.durationId);
+                    const durationObj = allPricingOptions.find(
+                        (d) => d.id === bookingData.durationId
+                    );
                     if (!durationObj) return;
 
                     const payload = {
@@ -166,16 +255,19 @@ const TimeSelectionPage = () => {
                         cleaning_duration: durationObj.hours,
                         vacuum: bookingData.selectedOptionIds.includes(4),
                         cooking: bookingData.selectedOptionIds.includes(5),
-                        laundry: bookingData.selectedOptionIds.includes(6)
+                        laundry: bookingData.selectedOptionIds.includes(6),
                     };
 
                     console.log('Checkout payload:', payload);
 
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/booking/hourly/checkout`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload),
-                    });
+                    const res = await fetch(
+                        `${process.env.NEXT_PUBLIC_API_URL}/api/booking/hourly/checkout`,
+                        {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload),
+                        }
+                    );
                     const data = await res.json();
                     console.log('Checkout result:', data);
                     setCheckoutResult(data);
@@ -188,10 +280,18 @@ const TimeSelectionPage = () => {
 
             return () => clearTimeout(timeoutId);
         }
-    }, [bookingData.staffCount, bookingData.durationId, bookingData.selectedOptionIds, bookingData.promoCode]);
+    }, [
+        bookingData.staffCount,
+        bookingData.durationId,
+        bookingData.selectedOptionIds,
+        bookingData.promoCode,
+    ]);
 
     const selectedDuration = useMemo(() => {
-        return allPricingOptions.find(opt => opt.id === bookingData.durationId)?.hours || 0;
+        return (
+            allPricingOptions.find((opt) => opt.id === bookingData.durationId)
+                ?.hours || 0
+        );
     }, [bookingData.durationId]);
 
     const endTime = useMemo(() => {
@@ -228,38 +328,37 @@ const TimeSelectionPage = () => {
                 title={serviceInfo.name}
                 onBack={handleBack}
                 footer={
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <p className="font-bold text-lg text-emerald-600 flex items-center">
-                                {isCheckoutLoading || !checkoutResult ? (
-                                    <span
-                                        className="inline-block w-6 h-6 border-4 border-gray-200 border-t-emerald-500 rounded-full animate-spin"
-                                        aria-label="Loading"
-                                    />
-                                ) : (
-                                    `${(
-                                        checkoutResult?.totalPrice || 0
-                                    ).toLocaleString()}đ`
-                                )}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                                {bookingData.staffCount} nhân viên x{' '}
-                                {allPricingOptions.find(
-                                    (d) => d.id === bookingData.durationId
-                                )?.hours || 0}
-                                h
-                            </p>
+                    canContinue ? (
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <p className="font-bold text-lg text-emerald-600 flex items-center">
+                                    {isCheckoutLoading || !checkoutResult ? (
+                                        <span
+                                            className="inline-block w-6 h-6 border-4 border-gray-200 border-t-emerald-500 rounded-full animate-spin"
+                                            aria-label="Loading"
+                                        />
+                                    ) : (
+                                        `${(
+                                            checkoutResult?.totalPrice || 0
+                                        ).toLocaleString()}đ`
+                                    )}
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                    {bookingData.staffCount} nhân viên x{' '}
+                                    {allPricingOptions.find(
+                                        (d) => d.id === bookingData.durationId
+                                    )?.hours || 0}
+                                    h
+                                </p>
+                            </div>
+                            <button
+                                onClick={handleNext}
+                                className="px-8 py-3 rounded-lg bg-emerald-500 text-white font-bold hover:bg-emerald-600"
+                            >
+                                Tiếp tục
+                            </button>
                         </div>
-                        <button
-                            onClick={handleNext}
-                            disabled={
-                                !bookingData.workDate || !bookingData.startTime
-                            }
-                            className="px-8 py-3 rounded-lg bg-emerald-500 text-white font-bold disabled:bg-slate-300 hover:bg-emerald-600"
-                        >
-                            Tiếp tục
-                        </button>
-                    </div>
+                    ) : null
                 }
             >
                 <div className="space-y-4">

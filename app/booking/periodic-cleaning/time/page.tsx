@@ -1,9 +1,16 @@
 // app/booking/periodic-cleaning/time/page.tsx
 'use client';
-import React, { useEffect, useState } from 'react';
-import BookingLayout, { CalendarModal } from '../../../../components/booking/BookingLayout';
+import React, { useEffect, useState, useMemo } from 'react';
+import BookingLayout, {
+    CalendarModal,
+} from '../../../../components/booking/BookingLayout';
 import { useRouter } from 'next/navigation';
-import { serviceInfo, weekDays, timeSlots, pricingData } from '../bookingConfig';
+import {
+    serviceInfo,
+    weekDays,
+    timeSlots,
+    pricingData,
+} from '../bookingConfig';
 
 const TimeStep = () => {
     const router = useRouter();
@@ -22,17 +29,44 @@ const TimeStep = () => {
         totalHoursPerSession: 3,
         schedule: {},
         startDate: new Date(new Date().setDate(new Date().getDate() + 1)),
-        packageDuration: 1
+        packageDuration: 1,
     });
     const [modal, setModal] = useState<{ type: string | null }>({ type: null });
     const [validationError, setValidationError] = useState('');
 
+    // chỉ cho phép footer khi workDate >= hôm nay và startTime >= giờ hiện tại nếu là hôm nay
+    const canContinue = useMemo(() => {
+        if (!bookingData.workDate || !bookingData.startTime) return false;
+        const now = new Date();
+        const today = new Date(now);
+        today.setHours(0, 0, 0, 0);
+
+        const selectedDate = new Date(bookingData.workDate);
+        selectedDate.setHours(0, 0, 0, 0);
+        // ngày chọn trước hôm nay => không cho tiếp tục
+        if (selectedDate < today) return false;
+
+        // nếu chọn ngày hôm nay, thì kiểm tra giờ bắt đầu >= giờ hiện tại
+        if (selectedDate.getTime() === today.getTime()) {
+            const [h, m] = bookingData.startTime.split(':').map(Number);
+            const selectedDateTime = new Date(bookingData.workDate);
+            selectedDateTime.setHours(h, m, 0, 0);
+            if (selectedDateTime < now) return false;
+        }
+
+        return true;
+    }, [bookingData.workDate, bookingData.startTime]);
+
     useEffect(() => {
         const saved = getSavedBookingData();
-        if (saved) setBookingData((prev: any) => ({ ...prev, ...JSON.parse(saved) }));
+        if (saved)
+            setBookingData((prev: any) => ({ ...prev, ...JSON.parse(saved) }));
     }, []);
     useEffect(() => {
-        localStorage.setItem('periodicBookingData', JSON.stringify(bookingData));
+        localStorage.setItem(
+            'periodicBookingData',
+            JSON.stringify(bookingData)
+        );
     }, [bookingData]);
 
     const handleScheduleToggle = (day: string, slot: string) => {
@@ -43,11 +77,14 @@ const TimeStep = () => {
     };
     const handleNext = () => {
         const selectedSlotsCount = Object.values(bookingData.schedule).reduce(
-            (acc: number, daySlots: any) => acc + Object.values(daySlots).filter(Boolean).length,
+            (acc: number, daySlots: any) =>
+                acc + Object.values(daySlots).filter(Boolean).length,
             0
         );
         if (selectedSlotsCount !== bookingData.sessionsPerWeek) {
-            setValidationError(`Vui lòng chọn đúng ${bookingData.sessionsPerWeek} ca làm việc.`);
+            setValidationError(
+                `Vui lòng chọn đúng ${bookingData.sessionsPerWeek} ca làm việc.`
+            );
             return;
         }
         setValidationError('');
@@ -58,30 +95,51 @@ const TimeStep = () => {
             title="Dọn dẹp Định kỳ - Bước 2: Lịch & Gói"
             onBack={() => router.push('/booking/periodic-cleaning/service')}
             footer={
-                <button
+                canContinue ? (<button
                     onClick={handleNext}
                     className="px-8 py-3 rounded-lg bg-teal-500 text-white font-bold w-full mt-4"
                 >
                     Tiếp tục
-                </button>
+                </button>) : null
             }
         >
             {/* Lịch làm việc */}
             <div className="bg-white rounded-xl p-4 mb-4">
-                <label className="font-bold text-slate-800 mb-2 block">Lịch làm việc</label>
+                <label className="font-bold text-slate-800 mb-2 block">
+                    Lịch làm việc
+                </label>
                 <p className="text-sm text-slate-500 mb-4">
-                    Vui lòng chọn <strong className="text-teal-500">{bookingData.sessionsPerWeek}</strong> ca làm việc cố định trong tuần.
+                    Vui lòng chọn{' '}
+                    <strong className="text-teal-500">
+                        {bookingData.sessionsPerWeek}
+                    </strong>{' '}
+                    ca làm việc cố định trong tuần.
                 </p>
-                {validationError && <p className="text-sm text-red-500 mb-4">{validationError}</p>}
+                {validationError && (
+                    <p className="text-sm text-red-500 mb-4">
+                        {validationError}
+                    </p>
+                )}
                 <div className="space-y-3">
                     {Object.keys(weekDays).map((dayKey) => (
-                        <div key={dayKey} className="grid grid-cols-4 items-center gap-2">
-                            <strong className="text-slate-600">{weekDays[dayKey]}</strong>
+                        <div
+                            key={dayKey}
+                            className="grid grid-cols-4 items-center gap-2"
+                        >
+                            <strong className="text-slate-600">
+                                {weekDays[dayKey]}
+                            </strong>
                             {Object.keys(timeSlots).map((slotKey) => (
                                 <button
                                     key={slotKey}
-                                    onClick={() => handleScheduleToggle(dayKey, slotKey)}
-                                    className={`p-2 rounded-lg font-semibold text-sm ${bookingData.schedule[dayKey]?.[slotKey] ? 'bg-teal-500 text-white' : 'bg-slate-100'}`}
+                                    onClick={() =>
+                                        handleScheduleToggle(dayKey, slotKey)
+                                    }
+                                    className={`p-2 rounded-lg font-semibold text-sm ${
+                                        bookingData.schedule[dayKey]?.[slotKey]
+                                            ? 'bg-teal-500 text-white'
+                                            : 'bg-slate-100'
+                                    }`}
                                 >
                                     {timeSlots[slotKey].split(' ')[0]}
                                 </button>
@@ -92,23 +150,40 @@ const TimeStep = () => {
             </div>
             {/* Ngày bắt đầu */}
             <div className="bg-white rounded-xl p-4 mb-4">
-                <label className="font-bold text-slate-800 mb-2 block">Ngày bắt đầu</label>
+                <label className="font-bold text-slate-800 mb-2 block">
+                    Ngày bắt đầu
+                </label>
                 <button
                     onClick={() => setModal({ type: 'calendar' })}
                     className="w-full p-3 bg-slate-100 rounded-lg text-slate-800 font-semibold text-left"
                 >
-                    {bookingData.startDate ? new Date(bookingData.startDate).toLocaleDateString('vi-VN') : 'Chọn ngày'}
+                    {bookingData.startDate
+                        ? new Date(bookingData.startDate).toLocaleDateString(
+                              'vi-VN'
+                          )
+                        : 'Chọn ngày'}
                 </button>
             </div>
             {/* Gói dịch vụ */}
             <div className="bg-white rounded-xl p-4 mb-4">
-                <label className="font-bold text-slate-800 mb-2 block">Gói dịch vụ</label>
+                <label className="font-bold text-slate-800 mb-2 block">
+                    Gói dịch vụ
+                </label>
                 <div className="grid grid-cols-3 gap-2">
                     {pricingData.packages.map((p) => (
                         <button
                             key={p.id}
-                            onClick={() => setBookingData({ ...bookingData, packageDuration: p.value })}
-                            className={`p-2 rounded-lg font-semibold ${bookingData.packageDuration === p.value ? 'bg-teal-500 text-white' : 'bg-slate-100'}`}
+                            onClick={() =>
+                                setBookingData({
+                                    ...bookingData,
+                                    packageDuration: p.value,
+                                })
+                            }
+                            className={`p-2 rounded-lg font-semibold ${
+                                bookingData.packageDuration === p.value
+                                    ? 'bg-teal-500 text-white'
+                                    : 'bg-slate-100'
+                            }`}
                         >
                             {p.label}
                         </button>
@@ -119,7 +194,9 @@ const TimeStep = () => {
                 isOpen={modal.type === 'calendar'}
                 onClose={() => setModal({ type: null })}
                 selectedDate={bookingData.startDate}
-                onSelectDate={(date) => setBookingData({ ...bookingData, startDate: date })}
+                onSelectDate={(date) =>
+                    setBookingData({ ...bookingData, startDate: date })
+                }
             />
         </BookingLayout>
     );

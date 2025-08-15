@@ -1,7 +1,9 @@
 // app/booking/ac-cleaning/time/page.tsx
 'use client';
-import React, { useState, useEffect } from 'react';
-import BookingLayout, { TimePickerModal } from '../../../../components/booking/BookingLayout';
+import React, { useState, useEffect, useMemo } from 'react';
+import BookingLayout, {
+    TimePickerModal,
+} from '../../../../components/booking/BookingLayout';
 import { useRouter } from 'next/navigation';
 
 const serviceInfo = { id: 5, name: 'Vệ sinh Máy lạnh' };
@@ -17,7 +19,15 @@ interface BookingData {
     workDate: Date | null;
     startTime: string;
 }
-const DateTimeSelectionForm = ({ bookingData, setBookingData, openModal }: { bookingData: BookingData; setBookingData: (d: BookingData) => void; openModal: (type: string) => void }) => {
+const DateTimeSelectionForm = ({
+    bookingData,
+    setBookingData,
+    openModal,
+}: {
+    bookingData: BookingData;
+    setBookingData: (d: BookingData) => void;
+    openModal: (type: string) => void;
+}) => {
     const { workDate, startTime } = bookingData;
     const [dates, setDates] = useState<DateInfo[]>([]);
     useEffect(() => {
@@ -33,8 +43,8 @@ const DateTimeSelectionForm = ({ bookingData, setBookingData, openModal }: { boo
                     i === 0
                         ? 'H.nay'
                         : i === 1
-                            ? 'N.mai'
-                            : weekDays[date.getDay()],
+                        ? 'N.mai'
+                        : weekDays[date.getDay()],
                 month: date.getMonth() + 1,
             };
         });
@@ -52,8 +62,13 @@ const DateTimeSelectionForm = ({ bookingData, setBookingData, openModal }: { boo
                     </label>
                     <span className="font-semibold text-sm">
                         Tháng{' '}
-                        {workDate ? workDate.getMonth() + 1 : new Date().getMonth() + 1}/
-                        {workDate ? workDate.getFullYear() : new Date().getFullYear()}
+                        {workDate
+                            ? workDate.getMonth() + 1
+                            : new Date().getMonth() + 1}
+                        /
+                        {workDate
+                            ? workDate.getFullYear()
+                            : new Date().getFullYear()}
                     </span>
                 </div>
                 <div className="grid grid-cols-7 gap-2">
@@ -66,10 +81,13 @@ const DateTimeSelectionForm = ({ bookingData, setBookingData, openModal }: { boo
                                     workDate: d.fullDate,
                                 })
                             }
-                            className={`p-2 rounded-lg text-center ${workDate && workDate.toDateString() === d.fullDate.toDateString()
+                            className={`p-2 rounded-lg text-center ${
+                                workDate &&
+                                workDate.toDateString() ===
+                                    d.fullDate.toDateString()
                                     ? 'bg-teal-500 text-white'
                                     : 'bg-slate-100'
-                                }`}
+                            }`}
                         >
                             <span className="text-xs block">{d.dayName}</span>
                             <span className="font-bold text-lg block">
@@ -110,12 +128,32 @@ export default function ACTimeStep() {
         return { workDate: '', startTime: '' };
     });
 
+    const canContinue = useMemo(() => {
+        if (!bookingData.workDate || !bookingData.startTime) return false;
+        const now = new Date();
+        const today = new Date(now);
+        today.setHours(0, 0, 0, 0);
+        const selectedDate = new Date(bookingData.workDate);
+        selectedDate.setHours(0, 0, 0, 0);
+        if (selectedDate < today) return false;
+        if (selectedDate.getTime() === today.getTime()) {
+            const [h, m] = bookingData.startTime.split(':').map(Number);
+            const selectedDateTime = new Date(bookingData.workDate);
+            selectedDateTime.setHours(h, m, 0, 0);
+            if (selectedDateTime < now) return false;
+        }
+        return true;
+    }, [bookingData.workDate, bookingData.startTime]);
+
     const [modal, setModal] = useState<{ type: string | null }>({ type: null });
     const openModal = (type: string) => setModal({ type });
     const closeModal = () => setModal({ type: null });
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            localStorage.setItem('acCleaningBookingData', JSON.stringify(bookingData));
+            localStorage.setItem(
+                'acCleaningBookingData',
+                JSON.stringify(bookingData)
+            );
         }
     }, [bookingData]);
     const handleNext = () => router.push('/booking/ac-cleaning/confirm');
@@ -134,16 +172,24 @@ export default function ACTimeStep() {
                 title={serviceInfo.name}
                 onBack={handleBack}
                 footer={
-                    <button
-                        onClick={handleNext}
-                        disabled={!bookingData.workDate || !bookingData.startTime}
-                        className="w-full px-8 py-3 rounded-lg bg-teal-500 text-white font-bold disabled:bg-slate-300"
-                    >
-                        Tiếp tục
-                    </button>
+                    canContinue ? (
+                        <button
+                            onClick={handleNext}
+                            disabled={
+                                !bookingData.workDate || !bookingData.startTime
+                            }
+                            className="w-full px-8 py-3 rounded-lg bg-teal-500 text-white font-bold disabled:bg-slate-300"
+                        >
+                            Tiếp tục
+                        </button>
+                    ) : null
                 }
             >
-                <DateTimeSelectionForm bookingData={bookingData} setBookingData={setBookingData} openModal={openModal} />
+                <DateTimeSelectionForm
+                    bookingData={bookingData}
+                    setBookingData={setBookingData}
+                    openModal={openModal}
+                />
             </BookingLayout>
         </>
     );

@@ -133,7 +133,7 @@ const ServiceSelectionPage = () => {
     };
 
     const handleBack = () => {
-        router.push('/dashboard');
+        router.push('/');
     };
 
     return (
