@@ -245,12 +245,11 @@ const BookingDetailModal = ({
                                     <DetailItem
                                         icon={<FileText size={16} />}
                                         label="Ghi chú của khách"
-                                        value={
-                                            <p className="italic">
-                                                "{booking.noted}"
-                                            </p>
-                                        }
-                                    />
+                                    >
+                                        <p className="italic">
+                                            "{booking.noted}"
+                                        </p>
+                                    </DetailItem>
                                 )}
                                 <DetailItem
                                     icon={<Calendar size={16} />}
@@ -363,7 +362,7 @@ const BookingDetailModal = ({
                                 person={{
                                     name: booking.tasker_name,
                                     avatar_url: booking.tasker_avatar,
-                                    phone: booking.tasker_phone,
+                                    phone: booking.tasker_phone ?? '',
                                 }}
                             />
                         ) : (
