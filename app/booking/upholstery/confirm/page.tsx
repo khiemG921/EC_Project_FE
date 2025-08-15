@@ -22,11 +22,12 @@ interface BookingData {
 interface CheckoutResult {
     breakdown?: { name: string; subTotal: number }[];
     totalPrice?: number;
+    discount?: number;
 }
 
 function UpholsteryConfirmContent() {
     const router = useRouter();
-    // For demo: get bookingData from localStorage or query (should use context/global state in real app)
+
     const [bookingData, setBookingData] = useState<BookingData>(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('upholsteryBookingData');
@@ -71,49 +72,48 @@ function UpholsteryConfirmContent() {
     }, []);
 
     useEffect(() => {
-        // Fetch price breakdown from backend
         if (Object.keys(bookingData.selectedItems || {}).length === 0) return;
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/checkout/breakdown`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/booking/upholstery/checkout`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ selectedItems: bookingData.selectedItems })
+            body: JSON.stringify({
+                selectedItems: bookingData.selectedItems,
+                voucher_code: promoCode,
+            }),
         })
             .then((r) => r.json())
             .then(setCheckoutResult)
             .catch(console.error);
-    }, [JSON.stringify(bookingData.selectedItems)]);
+    }, [JSON.stringify(bookingData.selectedItems), promoCode]);
 
     const vouchersArr = Array.isArray(allVouchers) ? allVouchers : [];
     const voucher = vouchersArr.find(v => v.voucher_code === promoCode);
 
     // Price calculation
     const { selectedItemsList, totalPrice, discountAmount, finalPrice } = useMemo(() => {
-        let price = 0;
-        let items = Object.keys(bookingData.selectedItems || {}).map((id: string) => {
-            const itemData = allPricingOptions.find(p => p.id === parseInt(id));
-            const quantity = bookingData.selectedItems[id];
-            let subTotal = 0;
-            if (checkoutResult && checkoutResult.breakdown) {
-                const b = checkoutResult?.breakdown?.find((x: any) => x.name === itemData?.name);
-                subTotal = b ? b.subTotal : 0;
-            } else if (itemData && 'price' in itemData && typeof (itemData as any).price === 'number') {
-                subTotal = (itemData as any).price * quantity;
-            } else {
-                subTotal = 0;
-            }
-            price += subTotal;
-            return itemData ? { ...itemData, quantity, subTotal } : null;
-        }).filter(Boolean);
-        // Calculate selected voucher before return (ensure it's in the correct scope)
-        const discount = voucher ? Math.floor(price * voucher.discount_percentage / 100) : 0;
-        return { selectedItemsList: items, totalPrice: price, discountAmount: discount, finalPrice: price - discount };
-    }, [bookingData.selectedItems, allVouchers, promoCode, checkoutResult]);
+        // dựng danh sách items từ breakdown
+        const items = (checkoutResult?.breakdown || []).map((bd, idx) => {
+            return {
+                id: idx,
+                name: bd.name,
+                quantity: bd.multiplier,
+                subTotal: bd.subTotal,
+            };
+        });
+        const total = checkoutResult?.totalPrice ?? 0;
+        const discount = checkoutResult?.discount ?? 0;
+        return {
+            selectedItemsList: items,
+            totalPrice: total,
+            discountAmount: discount,
+            finalPrice: total - discount,
+        };
+    }, [checkoutResult]);
 
     // Navigation
     const handleBack = () => router.push('/booking/upholstery/time');
 
     const handleConfirm = async () => {
-            // 1) Tạo Job trên backend
         try {
             // 1) Tạo Job trên backend
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/job/create`, {

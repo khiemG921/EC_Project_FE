@@ -1,6 +1,6 @@
 'use client';
 import Script from 'next/script';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import DashboardHeader from '@/components/common/DashboardHeader';
@@ -35,6 +35,7 @@ export default function PaymentPage() {
     const [selectedPaymentMethod, setSelectedPaymentMethod] =
         useState<string>('');
     const [isPaypalReady, setIsPaypalReady] = useState(false);
+    const paypalRenderedRef = useRef(false);
 
     const { user, logoutUser, loading } = useUser();
     const router = useRouter();
@@ -99,7 +100,7 @@ export default function PaymentPage() {
             const usdValue = (totalAmountVND / vndPerUsd).toFixed(2);
 
             // 2) Render PayPal Buttons với pop-up
-            if (window.paypal) {
+            if (window.paypal && !paypalRenderedRef.current) {
                 window.paypal
                     .Buttons({
                         style: {
@@ -227,6 +228,14 @@ export default function PaymentPage() {
                         },
                     })
                     .render('#paypal-button-container');
+            } else if (window.paypal && paypalRenderedRef.current) {
+                Swal.fire({
+                    text: 'PayPal SDK đã được render rồi.',
+                    icon: 'info',
+                    confirmButtonColor: '#14b8a6',
+                    confirmButtonText: 'Đóng',
+                    title: '',
+                });
             } else {
                 Swal.fire({
                     text: 'PayPal SDK chưa load xong, thử lại.',
@@ -312,7 +321,28 @@ export default function PaymentPage() {
         alert(`Phương thức ${selectedPaymentMethod} chưa được triển khai.`);
     };
 
-    const handleGoBack = () => {
+    const handleGoBack = async () => {
+        // 1) Gọi API hủy job nếu có jobId
+        if (jobId) {
+            try {
+                const res = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/job/cancel/${jobId}`,
+                    {
+                        method: 'POST',
+                        credentials: 'include',
+                    }
+                );
+                if (!res.ok) {
+                    const err = await res.json();
+                    console.error('Cancel job failed:', err);
+                }
+            } catch (error) {
+                console.error('Error cancelling job:', error);
+            }
+        } else {
+            console.warn('No jobId to cancel');
+        }
+
         window.history.back(); // Quay lại trang trước đó trong lịch sử trình duyệt
     };
 
