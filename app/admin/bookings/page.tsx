@@ -170,16 +170,24 @@ const StatusBadge = ({
         failed: 'Thất bại',
     };
 
-    const styles = type === 'job' ? jobStyles : transactionStyles;
-    const text = type === 'job' ? jobText : transactionText;
+    const styles =
+        type === 'job'
+            ? (jobStyles as typeof jobStyles)
+            : (transactionStyles as typeof transactionStyles);
+
+    const text =
+        type === 'job'
+            ? (jobText as typeof jobText)
+            : (transactionText as typeof transactionText);
 
     return (
         <span
             className={`px-2.5 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
-                styles[status] || 'bg-gray-100 text-gray-800'
+                styles[status as keyof typeof styles] ||
+                'bg-gray-100 text-gray-800'
             }`}
         >
-            {text[status] || status}
+            {text[status as keyof typeof text] || status}
         </span>
     );
 };
