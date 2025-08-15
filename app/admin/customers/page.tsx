@@ -17,6 +17,19 @@ const FilterIcon = () => (
     </svg>
 );
 
+interface BadgeProps {
+    text: string;
+    colorClass: string;
+}
+
+interface RankingBadgeProps {
+    ranking: 'bronze' | 'silver' | 'gold' | 'platinum';
+}
+
+interface StatusBadgeProps {
+    isActive: boolean;
+}
+
 // --- Mock Data (Dữ liệu mẫu) ---
 // Dữ liệu này mô phỏng theo cấu trúc DB bạn cung cấp.
 // Trong thực tế, bạn sẽ fetch dữ liệu này từ API của mình.
@@ -87,13 +100,13 @@ const mockCustomers = [
 // --- Helper Components (Component phụ trợ) ---
 
 // Component hiển thị huy hiệu cho Hạng và Trạng thái
-const Badge = ({ text, colorClass }) => (
+const Badge = ({ text, colorClass }: BadgeProps) => (
     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${colorClass}`}>
         {text}
     </span>
 );
 
-const RankingBadge = ({ ranking }) => {
+const RankingBadge = ({ ranking }: RankingBadgeProps) => {
     const rankStyles = {
         bronze: { text: 'Đồng', color: 'bg-orange-200 text-orange-800' },
         silver: { text: 'Bạc', color: 'bg-gray-200 text-gray-800' },
@@ -104,12 +117,12 @@ const RankingBadge = ({ ranking }) => {
     return <Badge text={style.text} colorClass={style.color} />;
 };
 
-const StatusBadge = ({ isActive }) => {
+const StatusBadge = ({ isActive }: StatusBadgeProps) => {
     const statusStyles = {
         true: { text: 'Hoạt động', color: 'bg-green-200 text-green-800' },
         false: { text: 'Vô hiệu', color: 'bg-red-200 text-red-800' },
     };
-    const style = statusStyles[isActive];
+    const style = statusStyles[String(isActive) as "true" | "false"];
     return <Badge text={style.text} colorClass={style.color} />;
 };
 
@@ -144,14 +157,14 @@ export default function AdminCustomersPage() {
 
     const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
 
-    const handleFilterChange = (e) => {
+    const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFilters(prev => ({ ...prev, [name]: value }));
         setCurrentPage(1); // Reset về trang đầu khi filter
     };
 
     // Hàm xử lý khi nhấp vào nút phân trang
-    const handlePageChange = (page) => {
+    const handlePageChange = (page: number) => {
         if (page > 0 && page <= totalPages) {
             setCurrentPage(page);
         }
@@ -245,7 +258,7 @@ export default function AdminCustomersPage() {
                                                 className="w-10 h-10 rounded-full object-cover mr-4"
                                                 src={customer.avatar_url || 'https://placehold.co/40x40/E2E8F0/4A5568?text=?'}
                                                 alt={`${customer.name}'s avatar`}
-                                                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/40x40/E2E8F0/4A5568?text=?'; }}
+                                                onError={(e) => { const target = e.target as HTMLImageElement; target.onerror = null; target.src = 'https://placehold.co/40x40/E2E8F0/4A5568?text=?'; }}
                                             />
                                             <div>
                                                 <div className="font-semibold text-gray-800">{customer.name}</div>
@@ -255,7 +268,7 @@ export default function AdminCustomersPage() {
                                     </td>
                                     <td className="px-6 py-4">{customer.phone}</td>
                                     <td className="px-6 py-4">
-                                        <RankingBadge ranking={customer.ranking} />
+                                        <RankingBadge ranking={customer.ranking as 'bronze' | 'silver' | 'gold' | 'platinum'} />
                                     </td>
                                     <td className="px-6 py-4">
                                         <StatusBadge isActive={customer.active} />
@@ -272,7 +285,7 @@ export default function AdminCustomersPage() {
                             ))}
                             {paginatedCustomers.length === 0 && (
                                 <tr>
-                                    <td colSpan="6" className="text-center py-10 text-gray-500">
+                                    <td colSpan={6} className="text-center py-10 text-gray-500">
                                         Không tìm thấy khách hàng nào.
                                     </td>
                                 </tr>
