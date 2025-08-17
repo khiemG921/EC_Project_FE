@@ -84,11 +84,6 @@ export default function PaymentPage() {
             return;
         }
 
-        if (!isPaypalReady) {
-            alert('PayPal SDK chưa load xong, thử lại.');
-            return;
-        }
-
         if (selectedPaymentMethod === 'paypal') {
             // 1) Lấy tỷ giá USD/VND
             const exKey = process.env.NEXT_PUBLIC_EXCHANGE_RATE_API_KEY;
@@ -451,31 +446,6 @@ export default function PaymentPage() {
                                             PayPal
                                         </span>
                                     </label>
-                                    <label className="flex items-center p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
-                                        <input
-                                            type="radio"
-                                            name="paymentMethod"
-                                            value="stripe"
-                                            checked={
-                                                selectedPaymentMethod ===
-                                                'stripe'
-                                            }
-                                            onChange={(e) =>
-                                                setSelectedPaymentMethod(
-                                                    e.target.value
-                                                )
-                                            }
-                                            className="form-radio text-teal-500 h-5 w-5"
-                                        />
-                                        <img
-                                            src="https://stripe.com/img/v3/home/social.png"
-                                            alt="Stripe"
-                                            className="h-6 ml-3"
-                                        />
-                                        <span className="ml-3 font-medium text-slate-700">
-                                            Stripe
-                                        </span>
-                                    </label>
                                 </div>
                             </div>
 
@@ -532,31 +502,6 @@ export default function PaymentPage() {
                                         />
                                         <span className="ml-1 font-medium text-slate-700">
                                             ZaloPay
-                                        </span>
-                                    </label>
-                                    <label className="flex items-center p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
-                                        <input
-                                            type="radio"
-                                            name="paymentMethod"
-                                            value="payoo"
-                                            checked={
-                                                selectedPaymentMethod ===
-                                                'payoo'
-                                            }
-                                            onChange={(e) =>
-                                                setSelectedPaymentMethod(
-                                                    e.target.value
-                                                )
-                                            }
-                                            className="form-radio text-teal-500 h-5 w-5"
-                                        />
-                                        <img
-                                            src="https://play-lh.googleusercontent.com/v_C10Tlx0wNXjn939QUw0iiq35D0-N0x8G2TMpWpUahjZX2NYUb9mnKp62AM51i1Qw"
-                                            alt="Payoo"
-                                            className="h-6 ml-3"
-                                        />
-                                        <span className="ml-3 font-medium text-slate-700">
-                                            Payoo
                                         </span>
                                     </label>
                                 </div>

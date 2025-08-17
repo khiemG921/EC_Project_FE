@@ -87,7 +87,10 @@ const ConfirmStep = () => {
             }
         } else if (savedPromoCode && isDataRestored) {
             setPromoCode(savedPromoCode);
-            setBookingData((prev: any) => ({ ...prev, promoCode: savedPromoCode }));
+            setBookingData((prev: any) => ({
+                ...prev,
+                promoCode: savedPromoCode,
+            }));
         }
     }, [isDataRestored]);
 
@@ -154,10 +157,15 @@ const ConfirmStep = () => {
                     credentials: 'include',
                     body: JSON.stringify({
                         serviceId: serviceInfo.id,
-                        serviceDetailId: bookingData.selectedServices?.join(','),
+                        serviceDetailId:
+                            bookingData.selectedServices?.join(','),
                         location: bookingData.address,
-                        useWallet: useWallet,
-                        walletDeduction: walletDeduction,
+                        description:
+                            '(' +
+                            checkoutResult?.breakdown
+                                ?.map((item: any) => `${item.name}`)
+                                .join(', ') +
+                            `) x ${bookingData.area} m2 x ${bookingData.sessionsPerWeek} buổi/tuần x ${bookingData.packageDuration} tháng`,
                     }),
                 }
             );
@@ -214,10 +222,7 @@ const ConfirmStep = () => {
                     </h3>
                     <div className="flex justify-between">
                         <span>Tần suất:</span>{' '}
-                        <strong>
-                            {bookingData.sessionsPerWeek} buổi/tuần,{' '}
-                            {bookingData.hoursPerSession}h/buổi
-                        </strong>
+                        <strong>{bookingData.sessionsPerWeek} buổi/tuần</strong>
                     </div>
                     <div className="flex justify-between">
                         <span>Lịch cố định:</span>{' '}

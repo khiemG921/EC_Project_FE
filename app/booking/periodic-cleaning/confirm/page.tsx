@@ -138,6 +138,11 @@ const ConfirmStep = () => {
                     serviceDetailId: bookingData.extraServices && bookingData.extraServices.length > 0
                         ? bookingData.extraServices.join(',')
                         : null,
+                    description: checkoutResult && checkoutResult.breakdown
+                        ? '(' + checkoutResult.breakdown
+                              .map((item: any) => `${item.name}`)
+                              .join(', ') + ')' + ` x ${bookingData.hoursPerSession} x ${bookingData.sessionsPerWeek} x ${bookingData.packageDuration} tháng`
+                        : '',
                     location: bookingData.address, // hoặc toạ độ
                 }),
             });

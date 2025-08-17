@@ -124,6 +124,9 @@ function UpholsteryConfirmContent() {
                     serviceId: serviceInfo.id, // hoặc giá trị tương ứng
                     serviceDetailId: Object.keys(bookingData.selectedItems).join(','), // danh sách id các mục đã chọn
                     location: bookingData.address, // hoặc toạ độ
+                    description: checkoutResult?.breakdown
+                        ?.map(item => `${item.name} x ${item.multiplier}`)
+                        .join(', ') || '',
                 }),
             });
 

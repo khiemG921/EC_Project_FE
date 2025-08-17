@@ -177,7 +177,9 @@ const BookingDetailModal = ({
     onCancelBooking: (jobId: number) => void;
     onResetBooking: (jobId: number) => void;
 }) => {
-    const totalAmount = (booking.amount || 0) + (booking.platform_fee || 0);
+    const totalAmount =
+        parseFloat(booking.amount?.toString() || '0') +
+        parseFloat(booking.platform_fee?.toString() || '0');
 
     const handleCancel = () => {
         if (
@@ -260,7 +262,7 @@ const BookingDetailModal = ({
                                         {booking.created_at
                                             ? new Date(
                                                   booking.created_at
-                                              ).toLocaleString('vi-VN')
+                                              ).toLocaleString('en-US')
                                             : 'N/A'}
                                     </p>
                                     {booking.completed_at && (
@@ -268,7 +270,7 @@ const BookingDetailModal = ({
                                             Hoàn thành:{' '}
                                             {new Date(
                                                 booking.completed_at
-                                            ).toLocaleString('vi-VN')}
+                                            ).toLocaleString('en-US')}
                                         </p>
                                     )}
                                 </DetailItem>
@@ -298,20 +300,20 @@ const BookingDetailModal = ({
                                             Phí dịch vụ:{' '}
                                             {(
                                                 booking.amount || 0
-                                            ).toLocaleString('vi-VN')}{' '}
+                                            ).toLocaleString('en-US')}{' '}
                                             {booking.currency}
                                         </p>
                                         <p>
                                             Phí nền tảng:{' '}
                                             {(
                                                 booking.platform_fee || 0
-                                            ).toLocaleString('vi-VN')}{' '}
+                                            ).toLocaleString('en-US')}{' '}
                                             {booking.currency}
                                         </p>
                                         <p className="font-bold">
                                             Tổng cộng:{' '}
                                             {totalAmount.toLocaleString(
-                                                'vi-VN'
+                                                'en-US'
                                             )}{' '}
                                             {booking.currency}
                                         </p>
@@ -332,7 +334,7 @@ const BookingDetailModal = ({
                                                 (Lúc:{' '}
                                                 {new Date(
                                                     booking.paid_at
-                                                ).toLocaleString('vi-VN')}
+                                                ).toLocaleString('en-US')}
                                                 )
                                             </span>
                                         )}
@@ -661,14 +663,21 @@ const AdminBookingManagementPage = () => {
                                         </td>
                                         <td className="px-6 py-4 font-semibold text-gray-700">
                                             {(
-                                                booking.amount || 0
-                                            ).toLocaleString('vi-VN')}
+                                                parseFloat(
+                                                    booking.amount?.toString() ||
+                                                        '0'
+                                                ) +
+                                                    parseFloat(
+                                                        booking.platform_fee?.toString() ||
+                                                            '0'
+                                                    ) || 0
+                                            ).toLocaleString('en-US')}
                                         </td>
                                         <td className="px-6 py-4">
                                             {booking.created_at
                                                 ? new Date(
                                                       booking.created_at
-                                                  ).toLocaleDateString('vi-VN')
+                                                  ).toLocaleDateString('en-US')
                                                 : 'N/A'}
                                         </td>
                                         <td className="px-6 py-4">

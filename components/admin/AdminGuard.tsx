@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { loginUser, verifyToken as verifyBackendToken } from '@/lib/authClient';
+import { loginUser, verifyToken as verifyBackendToken, logoutUser } from '@/lib/authClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AdminSidebar from './AdminSidebar';
@@ -17,23 +17,45 @@ export default function AdminGuard({ children }: AdminGuardProps) {
     const [loginError, setLoginError] = useState('');
     const [isAdmin, setIsAdmin] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [checking, setChecking] = useState(true);
 
-    // On mount: try to verify existing session cookie
+    // verify existing session cookie
     useEffect(() => {
+        let mounted = true;
         (async () => {
+            // Optimistic: if previous page already authenticated admin, keep UI without flashing
+            try {
+                const cached = typeof window !== 'undefined' ? window.sessionStorage.getItem('adminAuthed') : null;
+                if (cached === '1') {
+                    setIsAdmin(true);
+                    setShowLoginForm(false);
+                }
+            } catch {}
+
             try {
                 const result = await verifyBackendToken();
                 const roles: string[] = result?.user?.roles || [];
                 const hasAdmin = Array.isArray(roles) && roles.includes('admin');
+                if (!mounted) return;
                 if (hasAdmin) {
                     setIsAdmin(true);
                     setShowLoginForm(false);
-                    return;
+                    try { window.sessionStorage.setItem('adminAuthed', '1'); } catch {}
+                } else {
+                    setShowLoginForm(true);
+                    setIsAdmin(false);
+                    try { window.sessionStorage.removeItem('adminAuthed'); } catch {}
                 }
-            } catch {}
-            setShowLoginForm(true);
-            setIsAdmin(false);
+            } catch {
+                if (!mounted) return;
+                setShowLoginForm(true);
+                setIsAdmin(false);
+                try { window.sessionStorage.removeItem('adminAuthed'); } catch {}
+            } finally {
+                if (mounted) setChecking(false);
+            }
         })();
+        return () => { mounted = false; };
     }, []);
 
     // Real login handler via Firebase -> save backend session cookie
@@ -67,6 +89,7 @@ export default function AdminGuard({ children }: AdminGuardProps) {
             setIsAdmin(true);
             setShowLoginForm(false);
             setLoginError('');
+            try { window.sessionStorage.setItem('adminAuthed', '1'); } catch {}
         } catch (error) {
             console.error('Admin login error:', error);
             setLoginError('Đăng nhập thất bại, vui lòng kiểm tra thông tin.');
@@ -75,11 +98,18 @@ export default function AdminGuard({ children }: AdminGuardProps) {
         }
     };
 
-    const handleLogout = () => {
-        // Client-only cleanup; backend cookie cleared elsewhere via auth flow if needed
-        setIsAdmin(false);
-        setShowLoginForm(true);
-        setLoginForm({ email: '', password: '' });
+    const handleLogout = async () => {
+        try {
+            await logoutUser(); // xóa cookie trên backend
+        } catch (e) {
+            console.error("Admin logout failed:", e);
+        } finally {
+            // existing client-only cleanup
+            setIsAdmin(false);
+            setShowLoginForm(true);
+            setLoginForm({ email: '', password: '' });
+            try { window.sessionStorage.removeItem('adminAuthed'); } catch {}
+        }
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,7 +120,19 @@ export default function AdminGuard({ children }: AdminGuardProps) {
         }));
     };
 
-    // Show login form if not authenticated
+    // While verifying, show a neutral loader to avoid flashing the login screen
+    if (checking) {
+        return (
+            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+                <div className="text-slate-600 flex items-center gap-3">
+                    <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                    <span>Đang kiểm tra phiên đăng nhập…</span>
+                </div>
+            </div>
+        );
+    }
+
+    // Show login form if not authenticated (after verification completes)
     if (showLoginForm || !isAdmin) {
         return (
             <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -152,12 +194,6 @@ export default function AdminGuard({ children }: AdminGuardProps) {
                             )}
                         </Button>
                     </form>
-
-                    <div className="mt-6 p-4 bg-blue-50 rounded-md">
-                        <p className="text-sm text-blue-800">
-                            <strong>🎭 Mock Mode:</strong> Nhập bất kỳ email và mật khẩu nào để đăng nhập vào admin panel.
-                        </p>
-                    </div>
                 </div>
             </div>
         );

@@ -59,7 +59,7 @@ const JobCard = ({ job, onAccept, onView, accepting }: { job: TaskerJob; onAccep
                             </span>
                         )}
                         <div className="text-sm font-bold text-teal-600 bg-teal-50 px-3 py-1 rounded-full">
-                            {job.estimated_earnings.toLocaleString('vi-VN')}đ
+                            {job.estimated_earnings.toLocaleString('en-US')}đ
                         </div>
                     </div>
                 </div>
@@ -339,15 +339,14 @@ const FindJobsPage = () => {
                                 <div className="flex items-start gap-2"><MapPin size={16} className="mt-0.5" /><span>{jobDetail.location}</span></div>
                                 <div className="flex items-start gap-2"><Clock size={16} className="mt-0.5" /><span>Đăng lúc {new Date(jobDetail.created_at).toLocaleString('vi-VN')}</span></div>
                                 {jobDetail.noted && <p className="italic text-slate-600">"{jobDetail.noted}"</p>}
-                                {jobDetail.service_detail && (
+                                {jobDetail.description && (
                                     <div className="bg-slate-50 p-3 rounded-lg">
                                         <div className="font-semibold">Gói dịch vụ</div>
-                                        <div>{jobDetail.service_detail.name}</div>
-                                        {jobDetail.service_detail.price ? <div>Giá tham chiếu: {Number(jobDetail.service_detail.price).toLocaleString('vi-VN')}đ</div> : null}
-                                        {jobDetail.service_detail.duration ? <div>Thời lượng: {jobDetail.service_detail.duration} giờ</div> : null}
+                                        <div>{jobDetail.description}</div>
+                                        {jobDetail.duration ? <div>Thời lượng: {jobDetail.duration} giờ</div> : null}
                                     </div>
                                 )}
-                                <div className="font-semibold text-teal-700">Thu nhập ước tính: {Number(jobDetail.estimated_earnings).toLocaleString('vi-VN')}đ</div>
+                                <div className="font-semibold text-teal-700">Thu nhập ước tính: {Number(jobDetail.estimated_earnings).toLocaleString('en-US')}đ</div>
                             </div>
                         ) : (
                             <p className="text-slate-500">Không có dữ liệu.</p>

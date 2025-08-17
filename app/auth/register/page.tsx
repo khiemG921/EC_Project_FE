@@ -93,7 +93,7 @@ const RegisterPage = () => {
         >
             <div className="w-full max-w-sm bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-8">
                 <h1 className="text-3xl font-bold text-teal-500 text-center mb-2">Tạo tài khoản</h1>
-                <p className="text-center text-slate-600 mb-8">Bắt đầu khám phá bTaskee.</p>
+                <p className="text-center text-slate-600 mb-8">Bắt đầu khám phá CleanNow.</p>
                 {step === 1 && (
                     <form onSubmit={handleRegister} autoComplete="off" className="space-y-4">
                         <div>

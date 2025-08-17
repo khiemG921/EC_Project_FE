@@ -352,15 +352,25 @@ export default function ACConfirmStep() {
                                 .filter((key) => items[key].quantity > 0)
                                 .map((key) => {
                                     const { quantity, addGas } = items[key];
-                                    return `${key}:${quantity}${
-                                        addGas ? '-gas' : ''
-                                    }`;
+                                    return `${key}:${quantity}${addGas ? '-gas' : ''}`;
                                 });
-                            return details.length > 0
-                                ? details.join(',')
-                                : null;
+                            return details.length > 0 ? details.join(',') : null;
                         })(),
                         location: bookingData.address, // hoặc toạ độ
+                        description: (() => {
+                            if (!checkoutResult) return '';
+                            return checkoutResult.breakdown
+                                .map((item) => {
+                                    const qty = item.multiplier || 0;
+                                    return qty > 0
+                                        ? `${item.name}${
+                                              item.name === 'Bơm gas' ? ' + gas' : ''
+                                          } x ${qty}`
+                                        : '';
+                                })
+                                .filter(Boolean)
+                                .join(', ');
+                        })(),
                     }),
                 }
             );

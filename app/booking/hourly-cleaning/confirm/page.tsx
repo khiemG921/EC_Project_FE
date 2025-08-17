@@ -234,11 +234,18 @@ const ConfirmationPage = () => {
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({
-                    serviceId: serviceInfo.id, // hoặc giá trị tương ứng
-                    serviceDetailId: selectedExtras && selectedExtras.length > 0
-                        ? selectedExtras.map(e => e.name).join(',')
-                        : null, // nếu có
-                    location: bookingData.address, // hoặc toạ độ
+                    serviceId: serviceInfo.id,
+                    serviceDetailId:
+                        checkoutResult && checkoutResult.breakdown && checkoutResult.breakdown.length > 0
+                            ? checkoutResult.breakdown.map((item: any) => item.detail_id).join(',')
+                            : null,
+                    description: checkoutResult && checkoutResult.breakdown && checkoutResult.breakdown.length > 0
+                        ? checkoutResult.breakdown
+                              .map((item: any) => `(${item.name}) x ${bookingData.staffCount}`)
+                              .join(', ')
+                        : null,
+                    location: bookingData.address,
+                    totalDuration: totalDuration,
                 }),
             });
 
