@@ -31,7 +31,7 @@ const LoginPage = () => {
             console.log('Login successful, redirecting...');
             localStorage.setItem('token', token || 'demo-token');
             // Sau khi đăng nhập thành công, lấy thông tin người dùng
-            router.push('/dashboard');
+            router.replace('/dashboard');
         } catch (error) {
             console.error('Login error:', error);
             setError('Đăng nhập thất bại: ' + (error as Error).message);
@@ -46,7 +46,7 @@ const LoginPage = () => {
         const token = await loginWithGoogle();
         localStorage.setItem('token', token || 'demo-token');
         // Sau khi thành công, set user = MOCK_USER
-        router.push('/dashboard');
+        router.replace('/dashboard');
     }
 
     useEffect(() => {
