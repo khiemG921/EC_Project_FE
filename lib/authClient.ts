@@ -20,7 +20,6 @@ import {
 } from "firebase/auth";
 import { auth } from "./firebase";
 
-// Base URL cho backend API
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 // Đăng ký user với email và mật khẩu
 export async function registerUser(email: unknown, password: unknown, name?: string, phone?: string) {

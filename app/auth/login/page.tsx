@@ -2,7 +2,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginUser, loginWithGoogle, getDashboardData } from "@/lib/authClient";
+import { loginUser, loginWithGoogle, getDashboardData, verifyToken } from "@/lib/authClient";
 
 const slides = [
     "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=2070&auto=format&fit=crop",
@@ -28,10 +28,32 @@ const LoginPage = () => {
             console.log('Starting login process...');
             // Đăng nhập qua Firebase
             const token = await loginUser(email, password);
-            console.log('Login successful, redirecting...');
+            console.log('Login successful, verifying backend session...');
             localStorage.setItem('token', token || 'demo-token');
-            // Sau khi đăng nhập thành công, lấy thông tin người dùng
-            router.replace('/dashboard');
+            // Ensure backend session is set and valid before navigating (prevents middleware redirect)
+            try {
+                // retry a few times because browser may need a tick to accept cookie
+                const waitForVerify = async (retries = 6, delay = 300) => {
+                    let lastErr: any = null;
+                    for (let i = 0; i < retries; i++) {
+                        try {
+                            const res = await verifyToken();
+                            return res;
+                        } catch (err) {
+                            lastErr = err;
+                            await new Promise(r => setTimeout(r, delay));
+                        }
+                    }
+                    throw lastErr;
+                };
+
+                const verifyResult = await waitForVerify();
+                console.log('Backend verify result:', verifyResult);
+                router.push('/dashboard');
+            } catch (verifyErr) {
+                console.error('Backend verification failed after login:', verifyErr);
+                setError('Đăng nhập thành công nhưng không thể xác thực phiên. Vui lòng thử lại.');
+            }
         } catch (error) {
             console.error('Login error:', error);
             setError('Đăng nhập thất bại: ' + (error as Error).message);
@@ -46,7 +68,7 @@ const LoginPage = () => {
         const token = await loginWithGoogle();
         localStorage.setItem('token', token || 'demo-token');
         // Sau khi thành công, set user = MOCK_USER
-        router.replace('/dashboard');
+        router.push('/dashboard');
     }
 
     useEffect(() => {
