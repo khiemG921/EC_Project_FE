@@ -12,8 +12,7 @@ export interface TaskerApplication {
     status: 'pending' | 'approved' | 'rejected';
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;(globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '';
 // Hàm helper để lấy token với multiple attempts
 const getAuthToken = async (): Promise<string> => {
     const cookieToken = document.cookie

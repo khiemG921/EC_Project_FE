@@ -428,7 +428,8 @@ const AdminBookingManagementPage = () => {
         (async () => {
             setIsLoading(true);
             try {
-                const res = await fetch('/api/admin/jobs', {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+                const res = await fetch(`${apiUrl}/api/admin/jobs`, {
                     credentials: 'include',
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
