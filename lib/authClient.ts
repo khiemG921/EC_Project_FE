@@ -10,7 +10,6 @@ import {
 } from "firebase/auth";
 import { auth } from "./firebase";
 
-// Base URL cho backend API
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Xác thực mã đăng ký tài khoản
