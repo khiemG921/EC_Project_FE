@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || 'https://ecprojectbe-production.up.railway.app';
 
 import {Voucher, VoucherFilters} from '@/types/voucher'
 
@@ -35,7 +35,7 @@ export async function getVoucherStats() {
 }
 
 export async function fetchVoucherSummary(signal?: AbortSignal) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vouchers/summary`, {
+  const res = await fetch(`${API_BASE_URL}/api/vouchers/summary`, {
     credentials: 'include',
     signal
   });

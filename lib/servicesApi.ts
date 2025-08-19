@@ -20,7 +20,8 @@ export interface Service {
 }
 
 export async function fetchServices(): Promise<Service[]> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/services`, {
+  const base = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || 'https://ecprojectbe-production.up.railway.app';
+  const res = await fetch(`${base}/api/services`, {
     cache: 'no-store',
   });
   if (!res.ok) throw new Error('Không thể lấy danh sách dịch vụ');

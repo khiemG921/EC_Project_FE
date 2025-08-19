@@ -1,4 +1,4 @@
-const BASE = 'http://localhost:5000/api/crawler';
+const BASE = `${(globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || 'https://ecprojectbe-production.up.railway.app'}/api/crawler`;
 
 export async function getCrawlerStatus() {
   const r = await fetch(`${BASE}/status`, { cache: 'no-store' });

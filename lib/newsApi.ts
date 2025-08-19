@@ -1,6 +1,6 @@
 import { NewsArticle } from '../types/news';
 
-const API_URL = 'http://localhost:5000/api/news';
+const API_URL = `${(globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || 'https://ecprojectbe-production.up.railway.app'}/api/news`;
 
 // Hàm này sẽ lấy danh sách tin tức với các tham số tìm kiếm, phân trang và giới hạn
 export async function fetchNewsList({ search = '', page = 1, limit = 10 }: { search?: string; page?: number; limit?: number }): Promise<{ news: NewsArticle[]; total: number }> {

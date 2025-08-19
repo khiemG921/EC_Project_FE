@@ -1,6 +1,6 @@
 import { auth } from './firebase';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || 'https://ecprojectbe-production.up.railway.app';
 
 // Helper function để lấy auth token
 async function getAuthHeaders() {

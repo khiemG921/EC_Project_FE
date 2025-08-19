@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || 'https://ecprojectbe-production.up.railway.app';
 
 export async function fetchCountUsers(){
     const response = await fetch(`${API_BASE_URL}/api/admin/statistics/countUsers`);

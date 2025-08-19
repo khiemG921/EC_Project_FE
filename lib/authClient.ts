@@ -10,9 +10,7 @@ import {
 } from "firebase/auth";
 import { auth } from "./firebase";
 
-const API_BASE_URL = typeof window !== 'undefined'
-  ? ''
-  : (process.env.NEXT_PUBLIC_API_URL || '');
+const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '';
 
 // Xác thực mã đăng ký tài khoản
 export async function verifyRegisterCode(email: string, code: string) {
