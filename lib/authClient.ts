@@ -1,13 +1,3 @@
-// Xác thực mã đăng ký tài khoản
-export async function verifyRegisterCode(email: string, code: string) {
-  const response = await fetch(`${API_BASE_URL}/api/auth/verify-register-code`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, code }),
-  });
-  if (!response.ok) throw new Error("Mã xác thực không đúng hoặc hết hạn");
-  return response.json();
-}
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
@@ -22,6 +12,18 @@ import { auth } from "./firebase";
 
 // Base URL cho backend API
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+// Xác thực mã đăng ký tài khoản
+export async function verifyRegisterCode(email: string, code: string) {
+  const response = await fetch(`${API_BASE_URL}/api/auth/verify-register-code`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, code }),
+  });
+  if (!response.ok) throw new Error("Mã xác thực không đúng hoặc hết hạn");
+  return response.json();
+}
+
 // Đăng ký user với email và mật khẩu
 export async function registerUser(email: unknown, password: unknown, name?: string, phone?: string) {
   const emailStr = String(email).trim();

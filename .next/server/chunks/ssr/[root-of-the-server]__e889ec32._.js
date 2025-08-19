@@ -35,7 +35,6 @@ const auth = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f
 
 var { g: global, __dirname } = __turbopack_context__;
 {
-// Xác thực mã đăng ký tài khoản
 __turbopack_context__.s({
     "forceLogout": (()=>forceLogout),
     "getDashboardData": (()=>getDashboardData),
@@ -57,6 +56,10 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$node$2d$esm$2f$totp$2d$a9833fe5$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__d__as__signInWithPopup$3e$__ = __turbopack_context__.i("[project]/node_modules/@firebase/auth/dist/node-esm/totp-a9833fe5.js [app-ssr] (ecmascript) <export d as signInWithPopup>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$firebase$2f$auth$2f$dist$2f$node$2d$esm$2f$totp$2d$a9833fe5$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__D__as__signOut$3e$__ = __turbopack_context__.i("[project]/node_modules/@firebase/auth/dist/node-esm/totp-a9833fe5.js [app-ssr] (ecmascript) <export D as signOut>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$firebase$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/lib/firebase.ts [app-ssr] (ecmascript)");
+;
+;
+// Base URL cho backend API
+const API_BASE_URL = ("TURBOPACK compile-time value", "https://ecprojectbe-production.up.railway.app");
 async function verifyRegisterCode(email, code) {
     const response = await fetch(`${API_BASE_URL}/api/auth/verify-register-code`, {
         method: "POST",
@@ -71,10 +74,6 @@ async function verifyRegisterCode(email, code) {
     if (!response.ok) throw new Error("Mã xác thực không đúng hoặc hết hạn");
     return response.json();
 }
-;
-;
-// Base URL cho backend API
-const API_BASE_URL = ("TURBOPACK compile-time value", "https://ecprojectbe-production.up.railway.app");
 async function registerUser(email, password, name, phone) {
     const emailStr = String(email).trim();
     const passwordStr = String(password).trim();
