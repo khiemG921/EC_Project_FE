@@ -4,6 +4,8 @@ import { Smile, Briefcase, Sparkles } from 'lucide-react';
 import { Header } from '@/components/Header';
 import Footer from '@/components/Footer';
 
+const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || 'https://ecprojectbe-production.up.railway.app';
+
 const CareersPage = () => {
     return (
         <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-gray-800">
@@ -21,7 +23,7 @@ const CareersPage = () => {
                             Với trang web mang sứ mệnh đem sự tiện ích tới mọi gia đình đang cần và nguồn thu nhập tới những con người cần nó, chúng tôi tự hào giới thiệu với các bạn về trang web cleanNow của chúng tôi, hãy trở thành một thành viên của chúng tôi ngay hôm nay.
                         </p>
                         <a 
-                            href="http://localhost:3000/auth/login"
+                            href={`${API_BASE_URL}/auth/login`}
                             className="mt-8 inline-block bg-white text-emerald-600 font-bold py-3 px-8 rounded-full text-lg shadow-lg hover:bg-gray-100 transition-colors duration-300"
                         >
                             Đăng nhập ngay

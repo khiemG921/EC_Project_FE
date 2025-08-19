@@ -5,6 +5,8 @@ import BookingLayout from '../../../../components/booking/BookingLayout';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 
+const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || 'https://ecprojectbe-production.up.railway.app';
+
 // --- SHARED CONSTANTS---
 const allPricingOptions = [
     {
@@ -74,7 +76,7 @@ const FinalConfirmationForm = ({
         setPromoCode(code);
 
         // Fetch danh sách voucher
-        fetch('http://localhost:5000/api/vouchers')
+        fetch(`${API_BASE_URL}/vouchers`)
             .then((res) => res.json())
             .then((data) => setAllVouchers(data));
     }, []);
