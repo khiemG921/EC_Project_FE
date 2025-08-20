@@ -16,30 +16,28 @@ import {
     Tag,
     Bookmark,
 } from 'lucide-react';
-import { useUser } from '@/hooks/useUser';
-import { logoutUser } from '../lib/authClient';
+import { useAuth } from '@/providers/auth_provider';
 
 // Header component cho trang chủ
 // --- COMPONENT HEADER ---
 // Component này tự quản lý trạng thái đăng nhập và hiển thị UI tương ứng.
 export function Header() {
-    const { user, loading } = useUser();
+    const { user, loading, logout } = useAuth();
     const [isMenuOpen, setMenuOpen] = useState(false);
     const router = useRouter();
 
     const handleLogout = async () => {
-        try {
-            await logoutUser(); // gọi DELETE /api/auth/session ở backend
-        } catch (e) {
+            try {
+                await logout();
+            } catch (e) {
             console.error('Logout failed:', e);
         } finally {
-            // client cleanup (tùy file có state quản lý user)
-            try {
-                window.localStorage.removeItem('token');
-            } catch {}
-            router.push('/auth/login');
-        }
-    };
+            // ensure any legacy token is removed
+            try { window.localStorage.removeItem('token'); } catch {}
+
+            try { router.refresh(); } catch {}
+                }           
+        }    };
 
     // Hàm xử lý việc cuộn đến các mục trên trang chủ
     const handleAnchor = (anchor: string) => {

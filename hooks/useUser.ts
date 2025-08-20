@@ -1,11 +1,12 @@
-'use client';
+"use client";
 import { useState, useEffect, useCallback } from 'react';
-import { fetchProfile, updateProfile, uploadAvatar} from '@/lib/profileUser';
-import { logoutUser } from '@/lib/authClient';
+import { fetchProfile, updateProfile, uploadAvatar } from '@/lib/profileUser';
+import { useAuth } from '@/providers/auth_provider';
 
 export function useUser() {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { user: authUser, loading: authLoading, refreshUser, logout } = useAuth();
+  const [user, setUser] = useState<any>(authUser || null);
+  const [loading, setLoading] = useState(authLoading);
 
   // Hàm refetch profile
   const refetchProfile = useCallback(async () => {
@@ -14,17 +15,23 @@ export function useUser() {
       const data = await fetchProfile();
       const roles = Array.isArray(data.roles) ? data.roles : [data.roles || 'customer'];
       setUser({ ...data, roles });
+      try { await refreshUser(); } catch {}
     } catch {
       setUser(null);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refreshUser]);
 
   // Fetch profile khi component mount (reload)
+  // When global auth context user changes, sync local state
   useEffect(() => {
-    refetchProfile();
-  }, [refetchProfile]);
+    setUser(authUser || null);
+    setLoading(authLoading);
+    if (authUser) {
+      refetchProfile();
+    }
+  }, [authUser, authLoading, refetchProfile]);
 
   // Khi update profile thành công, refetch lại
   const saveProfile = async (data: any) => {
@@ -50,14 +57,15 @@ export function useUser() {
   }, [refetchProfile]);
 
   // Khi logout, xóa user info
-  const logout = async () => {
-    await logoutUser();
+  const logoutUser = async () => {
+    // Delegate to global auth logout so everything is cleared in one place
+    await logout();
     setUser(null);
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-      sessionStorage.removeItem('token');
+      try { localStorage.removeItem('token'); } catch {}
+      try { sessionStorage.removeItem('token'); } catch {}
     }
   };
 
-  return { user, setUser, loading, saveProfile, saveAvatar, logoutUser: logout, refetchProfile };
+  return { user, setUser, loading, saveProfile, saveAvatar, logoutUser, refetchProfile };
 }
