@@ -49,7 +49,7 @@ const LoginPage = () => {
 
                 const verifyResult = await waitForVerify();
                 console.log('Backend verify result:', verifyResult);
-                window.location.href = '/dashboard';
+                router.push('/dashboard');
             } catch (verifyErr) {
                 console.error('Backend verification failed after login:', verifyErr);
                 setError('Đăng nhập thành công nhưng không thể xác thực phiên. Vui lòng thử lại.');
@@ -67,7 +67,7 @@ const LoginPage = () => {
         // Nếu muốn test Google login thật, có thể gọi loginWithGoogle ở đây
         const token = await loginWithGoogle();
         // Sau khi thành công, set user = MOCK_USER
-        window.location.href = '/dashboard';
+        router.push('/dashboard');
     }
 
     useEffect(() => {
