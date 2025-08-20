@@ -1,25 +1,19 @@
-const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || 'https://ecprojectbe-production.up.railway.app';
+import fetchWithAuth from '@/lib/apiClient';
 
 export async function fetchCountUsers(){
-    const response = await fetch(`${API_BASE_URL}/api/admin/statistics/countUsers`);
-    if (!response.ok) {
-        throw new Error('Failed to fetch user count');
-    }
+    const response = await fetchWithAuth('/api/admin/statistics/countUsers', { method: 'GET' });
+    if (!response.ok) throw new Error('Failed to fetch user count');
     return response.json();
 }
 
 export async function fetchCountServices(){
-    const response = await fetch(`${API_BASE_URL}/api/admin/statistics/countServices`);
-    if (!response.ok) {
-        throw new Error('Failed to fetch service count');
-    }
+    const response = await fetchWithAuth('/api/admin/statistics/countServices', { method: 'GET' });
+    if (!response.ok) throw new Error('Failed to fetch service count');
     return response.json();
 }
 
 export async function fetchCountJobs(){
-    const response = await fetch(`${API_BASE_URL}/api/admin/statistics/countJobs`);
-    if (!response.ok) {
-        throw new Error('Failed to fetch job count');
-    }
+    const response = await fetchWithAuth('/api/admin/statistics/countJobs', { method: 'GET' });
+    if (!response.ok) throw new Error('Failed to fetch job count');
     return response.json();
 }

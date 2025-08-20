@@ -9,6 +9,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth } from "./firebase";
+import fetchWithAuth from '@/lib/apiClient';
 
 const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '';
 
@@ -77,7 +78,7 @@ export async function loginUser(email: unknown, password: unknown) {
     console.log('Got Firebase token:', idToken.substring(0, 20) + '...');
     
     // Lưu session vào backend
-    await saveSession(idToken);
+  await saveSession(idToken);
     console.log('Session saved successfully');
     
     return idToken;
@@ -194,7 +195,7 @@ export async function forceLogout() {
 export async function saveSession(idToken: string) {
   console.log('Saving session with token:', idToken.substring(0, 20) + '...');
   
-  const response = await fetch(`${API_BASE_URL}/api/auth/session`, {
+  const response = await fetchWithAuth('/api/auth/session', {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ idToken }),
@@ -290,7 +291,7 @@ export async function syncUserToDatabase(firebaseUser: User) {
     const token = await firebaseUser.getIdToken();
     console.log('Got Firebase token for sync');
     
-    const response = await fetch(`${API_BASE_URL}/api/auth/sync-user`, {
+  const response = await fetchWithAuth('/api/auth/sync-user', {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

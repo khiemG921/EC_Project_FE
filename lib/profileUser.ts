@@ -1,7 +1,7 @@
-const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '';
+import fetchWithAuth from '@/lib/apiClient';
 
 export async function fetchProfile() {
-  const res = await fetch(`${API_BASE_URL}/api/profile/findCustomer`, { credentials: 'include' });
+  const res = await fetchWithAuth('/api/profile/findCustomer', { method: 'GET' });
   if (!res.ok) throw new Error('Không thể lấy thông tin user');
   const raw = await res.json();
   // Map dữ liệu từ backend sang đúng định dạng UserProfile
@@ -36,10 +36,8 @@ export async function updateProfile(data: any) {
   if (data.dob !== undefined) payload.dob = data.dob; // backend sẽ map sang date_of_birth
   if (data.address !== undefined) payload.address = data.address;
 
-  const res = await fetch(`${API_BASE_URL}/api/profile/updateCustomerProfile`, {
+  const res = await fetchWithAuth('/api/profile/updateCustomerProfile', {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify(payload),
   });
 
@@ -56,10 +54,9 @@ export async function updateProfile(data: any) {
 export async function uploadAvatar(file: File): Promise<string> {
   const formData = new FormData();
   formData.append('avatar', file);
-  const res = await fetch(`${API_BASE_URL}/api/profile/updateCustomerImage`, {
+  const res = await fetchWithAuth('/api/profile/updateCustomerImage', {
     method: 'POST',
     body: formData,
-    credentials: 'include',
   });
   if (!res.ok) {
     const err = await res.json().catch(() => null);

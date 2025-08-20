@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../types/user';
 import { verifyToken, logoutUser } from '../lib/authClient';
+import fetchWithAuth from '@/lib/apiClient';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
@@ -71,10 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             // Thử sync user từ Firebase sang database
             try {
-              const syncResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/sync-user`, {
-                method: 'POST',
-                credentials: 'include'
-              });
+              const syncResponse = await fetchWithAuth('/api/auth/sync-user', { method: 'POST' });
               
               if (syncResponse.ok) {
                 console.log('User synced successfully, retrying verification...');
