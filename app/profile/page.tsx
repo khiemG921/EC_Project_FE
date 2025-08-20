@@ -274,13 +274,13 @@ const UserProfilePage = () => {
                                 <p className="text-slate-500">{formData.email}</p>
                             </div>
                             {/* <RankCard points={formData.rewardPoints || 0} /> */}
-                            {!formData.roles.includes('tasker') && !isEditMode && (
+                            {/* {!formData.roles.includes('tasker') && !isEditMode && (
                                 <div className="text-center bg-teal-50 p-6 rounded-xl border border-teal-200">
                                     <h3 className="text-lg font-bold text-teal-800">Sẵn sàng kiếm thêm thu nhập?</h3>
                                     <p className="text-teal-700 mt-1 mb-4 text-sm">Tham gia đội ngũ đối tác được tin cậy của chúng tôi.</p>
                                     <button onClick={handleRegisterTasker} className="inline-block bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-6 rounded-lg transition-colors shadow-lg shadow-teal-500/20">Bắt đầu đăng ký</button>
                                 </div>
-                            )}
+                            )} */}
                         </div>
 
                         {/* Cột phải: Thông tin chi tiết */}
