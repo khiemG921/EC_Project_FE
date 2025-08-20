@@ -6,11 +6,12 @@ import DashboardHeader from '@/components/common/DashboardHeader';
 import FavoriteServiceCard from '@/components/common/FavoriteServiceCard';
 // import FavoriteTaskerCard from '@/components/common/FavoriteTaskerCard'; // Tạm ẩn UI đối tác yêu thích
 import EmptyState from '@/components/common/EmptyState';
-import { useAuth } from '@/providers/auth_provider';
+import { useUser } from '@/hooks/useUser';
 import { useFavoriteServices } from '@/hooks/useFavoriteServices';
+import fetchWithAuth from '@/lib/apiClient';
 
 const FavoritesPage = () => {
-    const { user, logout, loading: authLoading } = useAuth();
+    const { user, logoutUser, loading: authLoading } = useUser();
     // Chỉ hiển thị dịch vụ yêu thích; ẩn tab đối tác
     // const [activeTab, setActiveTab] = React.useState<'services' | 'taskers'>('services');
     // const [taskers, setTaskers] = React.useState<any[]>([]);
@@ -32,31 +33,19 @@ const FavoritesPage = () => {
             return;
         }
         
-        // Gọi API backend để lấy chi tiết dịch vụ yêu thích cho user
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/favorite/details`, {
-            credentials: 'include'
-        })
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error(`HTTP ${res.status}`);
-                }
-                return res.json();
-            })
-            .then(favServices => {
+        // Gọi API backend để lấy chi tiết dịch vụ yêu thích cho user với auth
+        (async () => {
+            try {
+                const res = await fetchWithAuth('/api/favorite/details', { method: 'GET' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const favServices = await res.json();
                 console.log('Fetched favorite services:', favServices);
-                console.log('Services structure:', favServices.map((s: any) => ({ 
-                    id: s.id, 
-                    service_id: s.service_id, 
-                    _id: s._id,
-                    name: s.name,
-                    image_url: s.image_url
-                })));
                 setServices(favServices || []);
-            })
-            .catch((error) => {
+            } catch (error) {
                 console.error('Error fetching favorite services:', error);
                 setServices([]);
-            });
+            }
+        })();
     }, [isAuthenticated, favorites, refreshTrigger]); // Thêm refreshTrigger để force refresh
 
     // Fetch favorite taskers từ backend
@@ -115,7 +104,7 @@ const FavoritesPage = () => {
         <div className="min-h-screen bg-slate-50 font-sans">
             <DashboardHeader
                 user={user}
-                onLogout={logout}
+                onLogout={logoutUser}
                 activeRole={activeRole}
                 onRoleChange={() => { }}
                 showRoleSwitcher={user.roles.length > 1}

@@ -97,7 +97,7 @@ const JobCard = ({ job, onAccept, onView, accepting }: { job: TaskerJob; onAccep
 
 // --- Thành phần chính: Trang nhận việc ---
 const FindJobsPage = () => {
-    const { user, loading } = useUser();
+    const { user, loading, logoutUser } = useUser();
     const [jobs, setJobs] = useState<TaskerJob[]>([]);
 
     // State cho bộ lọc dịch vụ, thành phố, tìm kiếm
@@ -226,7 +226,7 @@ const FindJobsPage = () => {
     if (!isTasker) {
         return (
             <div className="min-h-screen bg-slate-50 font-sans">
-                <DashboardHeader user={user} onLogout={() => { }} activeRole={user.roles[0]} onRoleChange={() => { }} showRoleSwitcher={user.roles.length > 1} />
+                <DashboardHeader user={user} onLogout={logoutUser} activeRole={user.roles[0]} onRoleChange={() => { }} showRoleSwitcher={user.roles.length > 1} />
                 <main className="container mx-auto p-6 lg:p-8">
                     <div className="text-center py-16 px-6 bg-white rounded-2xl shadow-sm border border-slate-100">
                         <h2 className="text-xl font-semibold text-slate-700">Bạn không có quyền truy cập trang này</h2>
@@ -243,7 +243,7 @@ const FindJobsPage = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans">
-            <DashboardHeader user={user} onLogout={() => { }} activeRole="tasker" onRoleChange={() => { }} showRoleSwitcher={user.roles.length > 1} />
+            <DashboardHeader user={user} onLogout={logoutUser} activeRole="tasker" onRoleChange={() => { }} showRoleSwitcher={user.roles.length > 1} />
 
             <main className="container mx-auto p-6 lg:p-8">
                 <header className="mb-8">

@@ -1,63 +1,90 @@
 import fetchWithAuth from '@/lib/apiClient';
 
 export async function fetchProfile() {
-  let res: Response;
-  try {
-    res = await fetchWithAuth('/api/profile/findCustomer', { method: 'GET' });
-  } catch (err) {
-    // Network / CORS / fetch-level errors
-    const message = err instanceof Error ? err.message : String(err);
-    console.error('fetchProfile - network error:', message);
-    throw new Error(`Không thể kết nối để lấy thông tin user: ${message}`);
-  }
+  // Attempt to fetch both customer and tasker profiles concurrently and merge them.
+  const endpoints = [
+    { key: 'customer', path: '/api/profile/findCustomer' },
+    { key: 'tasker', path: '/api/profile/findTasker' },
+  ];
 
-  if (!res.ok) {
-    // Try to surface server response to FE console for debugging
-    let text = '';
-    try { text = await res.text(); } catch (e) { /* ignore */ }
-    console.error('fetchProfile - non-ok response', { status: res.status, statusText: res.statusText, body: text });
-    throw new Error(`Không thể lấy thông tin user (status=${res.status}): ${text || res.statusText}`);
-  }
+  const results = await Promise.allSettled(endpoints.map(e => fetchWithAuth(e.path, { method: 'GET' })));
 
-  // Parse JSON safely: if body isn't valid JSON, surface the raw text for debugging
-  let raw: any = null;
-  try {
-    // Some servers may return empty body; read as text first
-    const text = await res.text();
-    if (!text) {
-      console.warn('fetchProfile - empty response body with ok status', { status: res.status });
-      throw new Error(`Empty response body (status=${res.status})`);
+  const parsed: Record<string, any> = {};
+
+  for (let i = 0; i < results.length; i++) {
+    const ep = endpoints[i];
+    const r = results[i];
+    if (r.status === 'fulfilled') {
+      const res = r.value as Response;
+      if (!res.ok) {
+        let text = '';
+        try { text = await res.text(); } catch {}
+        console.warn('fetchProfile - endpoint non-ok', ep.key, { status: res.status, body: text });
+        continue;
+      }
+      // parse safely
+      try {
+        const text = await res.text();
+        if (!text) {
+          console.warn('fetchProfile - empty body from', ep.key);
+          continue;
+        }
+        parsed[ep.key] = JSON.parse(text);
+      } catch (err) {
+        console.error('fetchProfile - parse error for', ep.key, err);
+      }
+    } else {
+      console.warn('fetchProfile - network/fetch failed for', ep.key, results[i]);
     }
-    try {
-      raw = JSON.parse(text);
-    } catch (parseErr) {
-      console.error('fetchProfile - failed to parse JSON', { status: res.status, rawText: text });
-      throw new Error(`Không thể phân tích phản hồi từ server: ${String(parseErr)}`);
-    }
-  } catch (e) {
-    // rethrow to be handled by caller
-    throw e;
   }
-  // Map dữ liệu từ backend sang đúng định dạng UserProfile
-  const user = {
-    id: raw.customer_id || raw.id || '',
-    name: raw.name || '',
-    email: raw.email || '',
-    avatar: raw.avatar_url || raw.avatar || '',
-    roles: Array.isArray(raw.roles) ? raw.roles : [raw.roles || 'customer'],
-    phone: raw.phone || '',
-    gender: raw.gender || '',
-    dob: raw.date_of_birth || raw.dob || '',
-    address: raw.address || '',
-    rewardPoints: raw.reward_points ?? 0,
 
-    taskerInfo: raw.taskerInfo ? {
-      avgRating: raw.taskerInfo.avgRating ?? 0,
-      completedJobs: raw.taskerInfo.completedJobs ?? 0,
-      bio: raw.taskerInfo.bio || '',
-    } : undefined,
+  // If neither returned data, throw an error
+  if (!parsed.customer && !parsed.tasker) {
+    throw new Error('Không thể lấy thông tin user từ server');
+  }
+
+  const c = parsed.customer || {};
+  const t = parsed.tasker || {};
+
+  // Merge logic: prefer customer fields for profile data and favorites; attach taskerInfo when available
+  const merged = {
+    id: c.customer_id || c.id || t.tasker_id || t.id || '',
+    name: c.name || t.name || '',
+    email: c.email || t.email || '',
+    avatar: c.avatar_url || c.avatar || t.avatar_url || t.avatar || '',
+    roles: (() => {
+      const r = new Set<string>();
+      if (Array.isArray(c.roles)) c.roles.forEach((x: string) => r.add(x));
+      if (Array.isArray(t.roles)) t.roles.forEach((x: string) => r.add(x));
+      // if backend used different field names
+      if (!r.size) {
+        if (c.role) r.add(c.role);
+        if (t.role) r.add(t.role);
+      }
+      if (!r.size) r.add('customer');
+      return Array.from(r);
+    })(),
+    phone: c.phone || t.phone || '',
+    gender: c.gender || t.gender || '',
+    dob: c.date_of_birth || c.dob || t.date_of_birth || t.dob || '',
+    address: c.address || t.address || '',
+    // favorites and rewardPoints typically belong to customer
+    rewardPoints: c.reward_points ?? c.rewardPoints ?? 0,
+    favorites: c.favorite_services || c.favorites || [],
+    // tasker info merged
+    taskerInfo: (() => {
+      const src = t.taskerInfo || t || c.taskerInfo || null;
+      if (!src) return undefined;
+      return {
+        avgRating: src.avgRating ?? src.avg_rating ?? src.rating ?? 0,
+        completedJobs: src.completedJobs ?? src.completed_jobs ?? 0,
+        bio: src.bio || src.description || '',
+        skills: src.tasker_skills || src.skills || t.tasker_skills || c.tasker_skills || undefined,
+      };
+    })(),
   };
-  return user;
+
+  return merged;
 }
 
 export async function updateProfile(data: any) {
