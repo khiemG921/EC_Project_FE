@@ -147,28 +147,18 @@ async function registerGoogleUser(userData: {
 // Đăng xuất user
 export async function logoutUser() {
   try {
-    let idToken: string | null = null;
-    try {
-      if (auth.currentUser) {
-        idToken = await auth.currentUser.getIdToken();
-      }
-    } catch (e) {
-      console.warn('Could not get idToken before signOut:', e);
-    }
-
+    // sign out from Firebase to clear client auth state
+    await signOut(auth);
+    // request backend to delete the server session
     try {
       await fetch('/api/auth/session', {
         method: 'DELETE',
-        headers: idToken ? { 'Content-Type': 'application/json' } : undefined,
-        body: idToken ? JSON.stringify({ idToken }) : undefined,
         credentials: 'include',
       });
     } catch (e) {
+      // ignore FE route errors but log for debugging
       console.error('FE session delete failed:', e);
     }
-
-    // Finally sign out from Firebase to clear client auth state
-    await signOut(auth);
     if (typeof window !== 'undefined') {
       try {
         document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
@@ -218,7 +208,6 @@ export async function forceLogout() {
 export async function saveSession(idToken: string) {
   console.log('Saving session with token:', idToken.substring(0, 20) + '...');
   
-    // Call FE-side route which will proxy to backend and set cookie on FE domain
     const response = await fetch('/api/auth/session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

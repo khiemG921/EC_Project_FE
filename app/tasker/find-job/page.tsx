@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { MapPin, Clock, CheckCircle2, Search, Briefcase, SlidersHorizontal, Shield, FileText } from 'lucide-react';
+import fetchWithAuth from '@/lib/apiClient';
 import DashboardHeader from '@/components/common/DashboardHeader';
 import { useUser } from '@/hooks/useUser';
 import { Button } from '@/components/ui/button';
@@ -117,9 +118,7 @@ const FindJobsPage = () => {
     // Hàm lấy danh sách công việc từ API
     const fetchJobs = useCallback(async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tasker/jobs?city=${city}`, {
-                credentials: 'include'
-            });
+            const res = await fetchWithAuth(`/api/tasker/jobs?city=${city}`, { method: 'GET' });
             if (!res.ok) throw new Error('Không thể tải danh sách công việc');
             const data = await res.json();
             setJobs((data.data || []) as TaskerJob[]);
@@ -137,10 +136,7 @@ const FindJobsPage = () => {
     const acceptJob = async (jobId: number) => {
         try {
             setAcceptingId(jobId);
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tasker/jobs/${jobId}/accept`, {
-                method: 'POST',
-                credentials: 'include'
-            });
+            const res = await fetchWithAuth(`/api/tasker/jobs/${jobId}/accept`, { method: 'POST' });
             if (!res.ok) throw new Error('Không thể nhận việc');
             setJobs(prev => prev.map(j => j.job_id === jobId ? { ...j, accepted: true } : j));
         } catch (e) {
@@ -156,7 +152,7 @@ const FindJobsPage = () => {
         setDetailLoading(true);
         setDetailError(null);
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tasker/jobs/${jobId}`, { credentials: 'include' });
+            const res = await fetchWithAuth(`/api/tasker/jobs/${jobId}`, { method: 'GET' });
             if (!res.ok) {
                 if (res.status === 403) throw new Error('Bạn không có quyền xem chi tiết công việc này.');
                 if (res.status === 404) throw new Error('Không tìm thấy công việc.');
@@ -178,7 +174,7 @@ const FindJobsPage = () => {
         if (policy) return; // Đã có dữ liệu thì không gọi lại
         setPolicyLoading(true);
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tasker/regulations`, { credentials: 'include' });
+            const res = await fetchWithAuth('/api/tasker/regulations', { method: 'GET' });
             if (!res.ok) throw new Error('Không thể tải quy định');
             const data = await res.json();
             setPolicy(data);
