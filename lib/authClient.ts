@@ -10,6 +10,7 @@ import {
 } from "firebase/auth";
 import { auth } from "./firebase";
 import fetchWithAuth from '@/lib/apiClient';
+import { clearAuthTokens } from './authUtils';
 
 const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '';
 
@@ -158,14 +159,10 @@ export async function logoutUser() {
       // ignore backend delete errors
       console.error('Backend session delete failed:', e);
     }
-    try { localStorage.removeItem('token'); } catch (e) {}
-    try {
-      // If FE set a token cookie on the FE domain, try to delete it.
-      document.cookie = 'token=; Max-Age=0; path=/;';
-    } catch (e) { /* ignore */ }
     if (typeof window !== 'undefined') {
       try {
         document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        clearAuthTokens(); // Clear
       } catch (e) {}
       try { localStorage.removeItem('token'); } catch (e) {}
     }
