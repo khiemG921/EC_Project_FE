@@ -158,6 +158,11 @@ export async function logoutUser() {
       // ignore backend delete errors
       console.error('Backend session delete failed:', e);
     }
+    try { localStorage.removeItem('token'); } catch (e) {}
+    try {
+      // If FE set a token cookie on the FE domain, try to delete it.
+      document.cookie = 'token=; Max-Age=0; path=/;';
+    } catch (e) { /* ignore */ }
     if (typeof window !== 'undefined') {
       try {
         document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
