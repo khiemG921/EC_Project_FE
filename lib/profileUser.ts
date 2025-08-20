@@ -1,9 +1,43 @@
 import fetchWithAuth from '@/lib/apiClient';
 
 export async function fetchProfile() {
-  const res = await fetchWithAuth('/api/profile/findCustomer', { method: 'GET' });
-  if (!res.ok) throw new Error('Không thể lấy thông tin user');
-  const raw = await res.json();
+  let res: Response;
+  try {
+    res = await fetchWithAuth('/api/profile/findCustomer', { method: 'GET' });
+  } catch (err) {
+    // Network / CORS / fetch-level errors
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('fetchProfile - network error:', message);
+    throw new Error(`Không thể kết nối để lấy thông tin user: ${message}`);
+  }
+
+  if (!res.ok) {
+    // Try to surface server response to FE console for debugging
+    let text = '';
+    try { text = await res.text(); } catch (e) { /* ignore */ }
+    console.error('fetchProfile - non-ok response', { status: res.status, statusText: res.statusText, body: text });
+    throw new Error(`Không thể lấy thông tin user (status=${res.status}): ${text || res.statusText}`);
+  }
+
+  // Parse JSON safely: if body isn't valid JSON, surface the raw text for debugging
+  let raw: any = null;
+  try {
+    // Some servers may return empty body; read as text first
+    const text = await res.text();
+    if (!text) {
+      console.warn('fetchProfile - empty response body with ok status', { status: res.status });
+      throw new Error(`Empty response body (status=${res.status})`);
+    }
+    try {
+      raw = JSON.parse(text);
+    } catch (parseErr) {
+      console.error('fetchProfile - failed to parse JSON', { status: res.status, rawText: text });
+      throw new Error(`Không thể phân tích phản hồi từ server: ${String(parseErr)}`);
+    }
+  } catch (e) {
+    // rethrow to be handled by caller
+    throw e;
+  }
   // Map dữ liệu từ backend sang đúng định dạng UserProfile
   const user = {
     id: raw.customer_id || raw.id || '',
@@ -36,16 +70,23 @@ export async function updateProfile(data: any) {
   if (data.dob !== undefined) payload.dob = data.dob; // backend sẽ map sang date_of_birth
   if (data.address !== undefined) payload.address = data.address;
 
-  const res = await fetchWithAuth('/api/profile/updateCustomerProfile', {
-    method: 'PUT',
-    body: JSON.stringify(payload),
-  });
+  let res: Response;
+  try {
+    res = await fetchWithAuth('/api/profile/updateCustomerProfile', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('updateProfile - network error:', message);
+    throw new Error(`Không thể kết nối để cập nhật thông tin: ${message}`);
+  }
 
   if (!res.ok) {
     let serverMsg = '';
-    try { serverMsg = (await res.json())?.details || (await res.json())?.error; } catch {}
+    try { serverMsg = (await res.json())?.details || (await res.json())?.error || JSON.stringify(await res.text()); } catch {}
     console.error('Update profile failed. Status:', res.status, 'Payload:', payload, 'Server message:', serverMsg);
-    throw new Error('Không thể cập nhật thông tin');
+    throw new Error(`Không thể cập nhật thông tin (status=${res.status}): ${serverMsg}`);
   }
 
   return res.json();
@@ -54,14 +95,27 @@ export async function updateProfile(data: any) {
 export async function uploadAvatar(file: File): Promise<string> {
   const formData = new FormData();
   formData.append('avatar', file);
-  const res = await fetchWithAuth('/api/profile/updateCustomerImage', {
-    method: 'POST',
-    body: formData,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => null);
-    throw new Error(err?.message || 'Không thể tải lên ảnh đại diện');
+  let res: Response;
+  try {
+    res = await fetchWithAuth('/api/profile/updateCustomerImage', {
+      method: 'POST',
+      body: formData,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('uploadAvatar - network error:', message);
+    throw new Error(`Không thể kết nối để tải ảnh: ${message}`);
   }
+
+  if (!res.ok) {
+    // Try parse JSON then fallback to text
+    let errBody: any = null;
+    try { errBody = await res.json(); } catch { try { errBody = await res.text(); } catch {} }
+    console.error('uploadAvatar failed', { status: res.status, body: errBody });
+    const msg = typeof errBody === 'object' ? (errBody?.message || JSON.stringify(errBody)) : errBody;
+    throw new Error(msg || `Không thể tải lên ảnh đại diện (status=${res.status})`);
+  }
+
   const data = await res.json();
   // Backend returns { success, message, avatarUrl }
   const url = data?.avatarUrl || data?.secure_url || data?.url;
