@@ -146,13 +146,24 @@ async function registerGoogleUser(userData: {
 // Đăng xuất user
 export async function logoutUser() {
   try {
-    // Xóa session từ backend
-    await fetch(`${API_BASE_URL}/api/auth/session`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    // Đăng xuất khỏi Firebase
+    // sign out from Firebase to clear client auth state
     await signOut(auth);
+    // request backend to delete the server session
+    try {
+      await fetch(`${API_BASE_URL}/api/auth/session`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+    } catch (e) {
+      // ignore backend delete errors
+      console.error('Backend session delete failed:', e);
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      } catch (e) {}
+      try { localStorage.removeItem('token'); } catch (e) {}
+    }
   } catch (error) {
     console.error("Logout error:", error);
     throw error;
