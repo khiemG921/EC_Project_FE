@@ -151,13 +151,14 @@ export async function logoutUser() {
     await signOut(auth);
     // request backend to delete the server session
     try {
-      await fetch(`${API_BASE_URL}/api/auth/session`, {
-        method: "DELETE",
-        credentials: "include",
+      // Call FE-side session route so the cookie on the FE domain is cleared
+      await fetch('/api/auth/session', {
+        method: 'DELETE',
+        credentials: 'include',
       });
     } catch (e) {
-      // ignore backend delete errors
-      console.error('Backend session delete failed:', e);
+      // ignore FE route errors but log for debugging
+      console.error('FE session delete failed:', e);
     }
     if (typeof window !== 'undefined') {
       try {
@@ -208,12 +209,13 @@ export async function forceLogout() {
 export async function saveSession(idToken: string) {
   console.log('Saving session with token:', idToken.substring(0, 20) + '...');
   
-  const response = await fetchWithAuth('/api/auth/session', {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idToken }),
-    credentials: "include",
-  });
+    // Call FE-side route which will proxy to backend and set cookie on FE domain
+    const response = await fetch('/api/auth/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+      credentials: 'include',
+    });
   
   console.log('Save session response status:', response.status);
   
@@ -233,10 +235,10 @@ export async function verifyToken() {
   try {
     // Lấy Firebase token nếu user đã đăng nhập
     let headers: HeadersInit = {};
-    
+
     console.log('VerifyToken: Starting verification...');
     console.log('VerifyToken: auth.currentUser:', !!auth.currentUser);
-    
+
     if (auth.currentUser) {
       try {
         const token = await auth.currentUser.getIdToken();
@@ -249,16 +251,16 @@ export async function verifyToken() {
     } else {
       console.log('VerifyToken: No Firebase user logged in');
     }
-    
+
     console.log('VerifyToken: Making request to backend...');
     const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
       method: "GET",
       headers,
       credentials: "include",
     });
-    
+
     console.log('VerifyToken: Response status:', response.status);
-    
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.log('VerifyToken: Error response:', errorData);
@@ -267,7 +269,7 @@ export async function verifyToken() {
       }
       throw new Error("Failed to verify token");
     }
-    
+
     const result = await response.json();
     console.log('VerifyToken: Success, got user:', !!result.user);
     return result;
