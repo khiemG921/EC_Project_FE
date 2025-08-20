@@ -10,10 +10,6 @@ async function getIdTokenMaybe(): Promise<string | undefined> {
     // ignore
   }
 
-  if (typeof window !== 'undefined') {
-    const t = localStorage.getItem('token');
-    if (t) return t;
-  }
   return undefined;
 }
 

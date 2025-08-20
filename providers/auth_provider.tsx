@@ -125,8 +125,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Hàm login - nhận user data và token từ login form
   const login = (userData: User, token: string) => {
-    // Lưu token vào localStorage hoặc cookie
-    localStorage.setItem('token', token);
     setUser(userData);
   };
 
