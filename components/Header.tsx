@@ -32,9 +32,10 @@ export function Header() {
         } catch (e) {
             console.error('Logout failed:', e);
         } finally {
-            try { window.localStorage.removeItem('token'); } catch { }
-
-            try { router.refresh(); } catch { }
+            try {
+                window.localStorage.removeItem('token');
+            } catch {}
+            router.push('/');
         }
     };
 
