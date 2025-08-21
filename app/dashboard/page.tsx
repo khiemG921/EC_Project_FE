@@ -247,51 +247,6 @@ const CustomerDashboardPage = () => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Main Content */}
-                    <div className="lg:col-span-2 space-y-8">
-                        {/* Upcoming Job */}
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                            <h3 className="text-xl font-bold text-slate-800 mb-5">
-                                Công việc sắp tới
-                            </h3>
-                            {dashboardData.upcomingJob ? (
-                                <div className="bg-slate-50 p-4 rounded-xl flex justify-between items-center">
-                                    <div>
-                                        <p className="font-bold text-slate-800">
-                                            {
-                                                dashboardData.upcomingJob
-                                                    .serviceName
-                                            }
-                                        </p>
-                                        <p className="text-sm text-slate-500 mt-1">
-                                            {new Date(
-                                                dashboardData.upcomingJob.dateTime
-                                            ).toLocaleDateString('vi-VN', {
-                                                weekday: 'long',
-                                                day: '2-digit',
-                                                month: '2-digit',
-                                            })}
-                                            {' lúc '}
-                                            {new Date(
-                                                dashboardData.upcomingJob.dateTime
-                                            ).toLocaleTimeString('vi-VN', {
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                            })}
-                                        </p>
-                                    </div>
-                                    <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-green-100 text-green-800">
-                                        {dashboardData.upcomingJob.status}
-                                    </span>
-                                </div>
-                            ) : (
-                                <p className="text-slate-500 text-center py-4">
-                                    Không có công việc nào sắp tới.
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
                     {/* Sidebar */}
                     <div className="space-y-6">
                         {/* Booking CTA */}
