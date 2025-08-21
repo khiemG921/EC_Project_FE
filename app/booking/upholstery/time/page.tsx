@@ -97,6 +97,7 @@ export default function UpholsteryTimeStep() {
                 isOpen={modal.type === 'time'}
                 onClose={closeModal}
                 onSelect={handleSelectTime}
+                selectedDate={bookingData.workDate}
             />
             <BookingLayout
                 title={serviceInfo.name}

@@ -444,9 +444,9 @@ export const TimePickerModal = ({
         '16:30',
         '17:00',
     ];
-    const now = new Date();
-    const currentDate = selectedDate ? new Date(selectedDate) : now;
-    const isToday = currentDate.toDateString() === now.toDateString();
+   const now = new Date();
+   const currentDate = selectedDate ? new Date(selectedDate) : now;
+   const isToday = currentDate.toDateString() === now.toDateString();
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50">

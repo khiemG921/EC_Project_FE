@@ -322,6 +322,7 @@ const TimeSelectionPage = () => {
                 isOpen={isTimeModalOpen}
                 onClose={() => setIsTimeModalOpen(false)}
                 onSelect={handleSelectTime}
+                selectedDate={bookingData.workDate}
             />
 
             <BookingLayout

@@ -339,6 +339,10 @@ const ConfirmationPage = () => {
                     }),
                 }
             );
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+            console.log('Create job response:', res);
 
             // 2) Chuyển sang trang payment
             const job = await res.json();
