@@ -3,17 +3,29 @@
 import React, { useState, useEffect } from 'react';
 import BookingLayout from '../../../../components/booking/BookingLayout';
 import { useRouter } from 'next/navigation';
-import { serviceInfo, weekDays, timeSlots, pricingData, getExtraServicesWithPrices, getScheduleSummary } from '../bookingConfig';
+import { Wallet } from 'lucide-react';
+import {
+    serviceInfo,
+    weekDays,
+    timeSlots,
+    pricingData,
+    getExtraServicesWithPrices,
+    getScheduleSummary,
+} from '../bookingConfig';
 
 const ConfirmStep = () => {
     const router = useRouter();
-    
+
     // --- state ---
     const [bookingData, setBookingData] = useState<any>({});
-    const [allVouchers, setAllVouchers] = useState<any[]>([]);       // ← thêm
+    const [allVouchers, setAllVouchers] = useState<any[]>([]);
     const [promoCode, setPromoCode] = useState('');
     const [checkoutResult, setCheckoutResult] = useState<any>(null);
     const [isDataRestored, setIsDataRestored] = useState(false);
+
+    // --- State cho ví CleanPay ---
+    const [walletBalance, setWalletBalance] = useState(0);
+    const [useWallet, setUseWallet] = useState(false);
 
     useEffect(() => {
         const savedBookingData = localStorage.getItem('periodicBookingData');
@@ -32,21 +44,44 @@ const ConfirmStep = () => {
         setIsDataRestored(true);
     }, []);
 
+    // --- Fetch số dư ví CleanPay (reward_points) ---
+    useEffect(() => {
+        let aborted = false;
+        (async () => {
+            try {
+                const res = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/customer/reward-points`,
+                    { credentials: 'include' }
+                );
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (!aborted) {
+                    setWalletBalance(Number(data?.reward_points) || 0);
+                }
+            } catch (err) {
+                console.error('Failed to fetch CleanPay balance:', err);
+            }
+        })();
+        return () => {
+            aborted = true;
+        };
+    }, []);
+
     useEffect(() => {
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vouchers`, {
             credentials: 'include',
         })
-        .then((res) => res.json())
-        .then((data) => {
-            // if API returns { vouchers: [] } or similar
-            const arr = Array.isArray(data)
-                ? data
-                : Array.isArray(data.vouchers)
-                ? data.vouchers
-                : [];
-            setAllVouchers(arr);
-        })
-        .catch((err) => console.error('Failed to load vouchers:', err));
+            .then((res) => res.json())
+            .then((data) => {
+                // if API returns { vouchers: [] } or similar
+                const arr = Array.isArray(data)
+                    ? data
+                    : Array.isArray(data.vouchers)
+                    ? data.vouchers
+                    : [];
+                setAllVouchers(arr);
+            })
+            .catch((err) => console.error('Failed to load vouchers:', err));
     }, []);
 
     // Xử lý promo code riêng biệt
@@ -75,7 +110,10 @@ const ConfirmStep = () => {
         } else if (savedPromoCode && isDataRestored) {
             console.log('Update voucher localStorage:', savedPromoCode);
             setPromoCode(savedPromoCode);
-            setBookingData((prev: any) => ({ ...prev, promoCode: savedPromoCode }));
+            setBookingData((prev: any) => ({
+                ...prev,
+                promoCode: savedPromoCode,
+            }));
         }
     }, [isDataRestored]); // Chạy lại khi isDataRestored thay đổi
 
@@ -89,7 +127,12 @@ const ConfirmStep = () => {
 
     useEffect(() => {
         // Gọi API tính toán lại xèng khi bookingData thay đổiiiii
-        if (!bookingData.hoursPerSession || !bookingData.sessionsPerWeek || !bookingData.packageDuration) return;
+        if (
+            !bookingData.hoursPerSession ||
+            !bookingData.sessionsPerWeek ||
+            !bookingData.packageDuration
+        )
+            return;
         const payload = {
             duration: bookingData.hoursPerSession,
             daysPerWeek: bookingData.sessionsPerWeek,
@@ -100,18 +143,24 @@ const ConfirmStep = () => {
             vacuum: bookingData.extraServices?.includes(14),
             voucher_code: bookingData.promoCode || '',
         };
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/booking/periodic/checkout`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-        })
+        fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/booking/periodic/checkout`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            }
+        )
             .then((res) => res.json())
             .then((data) => setCheckoutResult(data));
     }, [bookingData]);
 
     const vouchersArr = Array.isArray(allVouchers) ? allVouchers : [];
-    const voucher = vouchersArr.find(v => v.voucher_code === promoCode);
-    const promoDiscountAmount = voucher && checkoutResult ? (checkoutResult.totalPrice * voucher.discount_percentage) / 100 : 0;
+    const voucher = vouchersArr.find((v) => v.voucher_code === promoCode);
+    const promoDiscountAmount =
+        voucher && checkoutResult
+            ? (checkoutResult.totalPrice * voucher.discount_percentage) / 100
+            : 0;
     const scheduleSummary = getScheduleSummary(bookingData.schedule);
     const extraConfig = getExtraServicesWithPrices(bookingData.extraServices);
     // Lấy các mục từ breakdown (API) có name khớp với dịch vụ thêm đã chọn
@@ -120,41 +169,76 @@ const ConfirmStep = () => {
             extraConfig.some((e) => e?.name === item.name)
         ) || [];
 
+    // --- Tính toán giá cuối cùng ---
+    const finalPrice = checkoutResult
+        ? checkoutResult.totalPrice - promoDiscountAmount
+        : 0;
+    const walletDeduction = useWallet ? Math.min(finalPrice, walletBalance) : 0;
+    const remainingAmount = finalPrice - walletDeduction;
 
     const goToPromo = () => {
-        router.push('/promo?service=periodic-cleaning&returnUrl=/booking/periodic-cleaning/confirm');
+        router.push(
+            '/promo?service=periodic-cleaning&returnUrl=/booking/periodic-cleaning/confirm'
+        );
     };
 
     const handleConfirm = async () => {
         // 1) Tạo Job trên backend
         try {
             // 1) Tạo Job trên backend
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/job/create`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({
-                    serviceId: serviceInfo.id, // hoặc giá trị tương ứng
-                    serviceDetailId: bookingData.extraServices && bookingData.extraServices.length > 0
-                        ? bookingData.extraServices.join(',')
-                        : null,
-                    description: checkoutResult && checkoutResult.breakdown
-                        ? '(' + checkoutResult.breakdown
-                              .map((item: any) => `${item.name}`)
-                              .join(', ') + ')' + ` x ${bookingData.hoursPerSession} x ${bookingData.sessionsPerWeek} x ${bookingData.packageDuration} tháng`
-                        : '',
-                    location: bookingData.address, // hoặc toạ độ
-                }),
-            });
+            const res = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/api/job/create`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        serviceId: serviceInfo.id, // hoặc giá trị tương ứng
+                        serviceDetailId:
+                            bookingData.extraServices &&
+                            bookingData.extraServices.length > 0
+                                ? bookingData.extraServices.join(',')
+                                : null,
+                        description:
+                            checkoutResult && checkoutResult.breakdown
+                                ? '(' +
+                                  checkoutResult.breakdown
+                                      .map((item: any) => `${item.name}`)
+                                      .join(', ') +
+                                  ')' +
+                                  ` x ${bookingData.hoursPerSession} x ${bookingData.sessionsPerWeek} x ${bookingData.packageDuration} tháng`
+                                : '',
+                        location: bookingData.address, // hoặc toạ độ
+                    }),
+                }
+            );
 
             // 2) Chuyển sang trang payment
             const job = await res.json();
-            localStorage.setItem('paymentInfo', JSON.stringify({
-                totalPrice: checkoutResult.totalPrice,
-                jobId: job.job_id,
-            }));
+            localStorage.setItem(
+                'paymentInfo',
+                JSON.stringify({
+                    ttotalPrice: remainingAmount,
+                    jobId: job.job_id,
+                    usedCleanCoin: useWallet ? walletDeduction : 0,
+                    voucher_code: bookingData.promoCode || '',
+                })
+            );
 
-            router.push(`/payment?totalPrice=${checkoutResult.totalPrice}&jobId=${job.job_id}`);
+            // Trừ CleanPay (reward_points) nếu khách dùng ví
+            if (useWallet && walletDeduction > 0) {
+                await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/customer/substract-cleanpay`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ amount: walletDeduction }),
+                    }
+                );
+            }
+
+            router.push('/payment');
         } catch (err) {
             console.error('Failed to create job:', err);
             alert('Không thể tạo công việc, vui lòng thử lại.');
@@ -259,6 +343,55 @@ const ConfirmStep = () => {
                             </span>
                         </div>
                     )}
+                    {/* --- ví CleanPay --- */}
+                    <div className="pt-2 border-t border-slate-200 mt-4">
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                                <Wallet size={18} className="text-teal-500" />
+                                <div>
+                                    <p
+                                        className={`font-semibold ${
+                                            walletBalance > 0
+                                                ? 'text-slate-700'
+                                                : 'text-slate-400'
+                                        }`}
+                                    >
+                                        Ví CleanPay
+                                    </p>
+                                    <p className="text-xs text-slate-500">
+                                        Số dư: {walletBalance.toLocaleString()}đ
+                                        {walletBalance === 0 && (
+                                            <span className="text-red-500 ml-2">
+                                                Không đủ CleanCoin
+                                            </span>
+                                        )}
+                                    </p>
+                                </div>
+                            </div>
+                            <label
+                                htmlFor="useWalletToggle"
+                                className="relative inline-flex items-center cursor-pointer"
+                            >
+                                <input
+                                    type="checkbox"
+                                    id="useWalletToggle"
+                                    className="sr-only peer"
+                                    checked={useWallet}
+                                    onChange={() => setUseWallet(!useWallet)}
+                                    disabled={walletBalance === 0}
+                                />
+                                <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-teal-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500 peer-disabled:cursor-not-allowed peer-disabled:bg-slate-100"></div>
+                            </label>
+                        </div>
+                        {useWallet && walletBalance > 0 && (
+                            <div className="flex justify-between text-blue-600 mt-2">
+                                <span>Sử dụng CleanCoin</span>
+                                <span>
+                                    -{walletDeduction.toLocaleString()}đ
+                                </span>
+                            </div>
+                        )}
+                    </div>
                 </div>
                 {/* Thanh toán */}
                 <div className="bg-white rounded-xl p-4 space-y-2">
@@ -301,14 +434,8 @@ const ConfirmStep = () => {
                             )}
                             <hr />
                             <div className="flex justify-between font-bold text-slate-800 text-lg">
-                                <span>Tổng cộng</span>
-                                <span>
-                                    {(
-                                        checkoutResult.totalPrice -
-                                        (promoDiscountAmount || 0)
-                                    ).toLocaleString()}
-                                    đ
-                                </span>
+                                <span>Thành tiền</span>
+                                <span>{remainingAmount.toLocaleString()}đ</span>
                             </div>
                         </>
                     )}

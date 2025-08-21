@@ -1,6 +1,6 @@
 // app/booking/business-cleaning/confirm/page.tsx
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import BookingLayout from '../../../../components/booking/BookingLayout';
 import { useRouter } from 'next/navigation';
 import {
@@ -41,17 +41,27 @@ const ConfirmStep = () => {
         setIsDataRestored(true);
     }, []);
 
-    // --- Fetch số dư ví của người dùng ---
+    // --- Fetch số dư ví CleanPay (reward_points) ---
     useEffect(() => {
-        const fetchWalletBalance = async () => {
+        let aborted = false;
+        (async () => {
             try {
-                // Dữ liệu giả lập
-                setWalletBalance(50000); // Giả lập số dư thấp hơn để test
-            } catch (error) {
-                console.error('Failed to fetch wallet balance:', error);
+                const res = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/customer/reward-points`,
+                    { credentials: 'include' }
+                );
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (!aborted) {
+                    setWalletBalance(Number(data?.reward_points) || 0);
+                }
+            } catch (err) {
+                console.error('Failed to fetch CleanPay balance:', err);
             }
+        })();
+        return () => {
+            aborted = true;
         };
-        fetchWalletBalance();
     }, []);
 
     useEffect(() => {
@@ -176,16 +186,25 @@ const ConfirmStep = () => {
                 JSON.stringify({
                     totalPrice: remainingAmount,
                     jobId: job.job_id,
+                    usedCleanCoin: useWallet ? walletDeduction : 0,
+                    voucher_code: bookingData.promoCode || '',
                 })
             );
 
-            if (remainingAmount <= 0) {
-                router.push('/booking/success');
-            } else {
-                router.push(
-                    `/payment?totalPrice=${remainingAmount}&jobId=${job.job_id}`
+            // Trừ CleanPay (reward_points) nếu khách dùng ví
+            if (useWallet && walletDeduction > 0) {
+                await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/customer/substract-cleanpay`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ amount: walletDeduction }),
+                    }
                 );
             }
+
+            router.push('/payment');
         } catch (err) {
             console.error('Failed to create job:', err);
             alert('Không thể tạo công việc, vui lòng thử lại.');
@@ -271,13 +290,6 @@ const ConfirmStep = () => {
                             </span>
                         </div>
                     )}
-                </div>
-
-                <div className="bg-white rounded-xl p-4 space-y-3">
-                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                        <i className="fas fa-money-bill-wave text-teal-500"></i>
-                        THANH TOÁN
-                    </h3>
                     {/* --- ví CleanPay --- */}
                     <div className="pt-2 border-t border-slate-200 mt-4">
                         <div className="flex justify-between items-center">
@@ -291,7 +303,7 @@ const ConfirmStep = () => {
                                                 : 'text-slate-400'
                                         }`}
                                     >
-                                        Sử dụng ví CleanPay
+                                        Ví CleanPay
                                     </p>
                                     <p className="text-xs text-slate-500">
                                         Số dư: {walletBalance.toLocaleString()}đ
@@ -320,13 +332,20 @@ const ConfirmStep = () => {
                         </div>
                         {useWallet && walletBalance > 0 && (
                             <div className="flex justify-between text-blue-600 mt-2">
-                                <span>Thanh toán bằng ví</span>
+                                <span>Sử dụng CleanCoin</span>
                                 <span>
                                     -{walletDeduction.toLocaleString()}đ
                                 </span>
                             </div>
                         )}
                     </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-4 space-y-3">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                        <i className="fas fa-money-bill-wave text-teal-500"></i>
+                        THANH TOÁN
+                    </h3>
                     {checkoutResult && (
                         <>
                             <div className="flex justify-between">
@@ -363,12 +382,6 @@ const ConfirmStep = () => {
                             <hr className="my-2" />
                             <div className="flex justify-between font-bold text-slate-800 text-lg">
                                 <span>Thành tiền</span>
-                                <span>{finalPrice.toLocaleString()}đ</span>
-                            </div>
-
-                            <hr className="my-2" />
-                            <div className="flex justify-between font-bold text-slate-800 text-xl">
-                                <span>Tổng cộng</span>
                                 <span>{remainingAmount.toLocaleString()}đ</span>
                             </div>
                         </>

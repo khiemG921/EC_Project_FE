@@ -16,7 +16,7 @@ const ServiceStep = () => {
         extraServices: number[];
         totalHoursPerSession: number;
         schedule: Record<string, unknown>;
-        startDate: Date;
+        workDate: Date;
         packageDuration: number;
     }
 
@@ -27,7 +27,7 @@ const ServiceStep = () => {
         extraServices: [],
         totalHoursPerSession: 3,
         schedule: {},
-        startDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+        workDate: new Date(new Date().setDate(new Date().getDate() + 1)),
         packageDuration: 1,
     });
     const [modal, setModal] = useState<{ type: string | null }>({ type: null });

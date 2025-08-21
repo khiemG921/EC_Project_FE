@@ -28,34 +28,24 @@ const TimeStep = () => {
         extraServices: [],
         totalHoursPerSession: 3,
         schedule: {},
-        startDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+        workDate: new Date(new Date().setDate(new Date().getDate() + 1)),
         packageDuration: 1,
     });
     const [modal, setModal] = useState<{ type: string | null }>({ type: null });
     const [validationError, setValidationError] = useState('');
 
     // chỉ cho phép footer khi workDate >= hôm nay và startTime >= giờ hiện tại nếu là hôm nay
+    // chỉ cho phép footer khi workDate >= hôm nay
     const canContinue = useMemo(() => {
-        if (!bookingData.workDate || !bookingData.startTime) return false;
+        if (!bookingData.workDate) return false;
         const now = new Date();
         const today = new Date(now);
         today.setHours(0, 0, 0, 0);
 
-        const selectedDate = new Date(bookingData.workDate);
-        selectedDate.setHours(0, 0, 0, 0);
-        // ngày chọn trước hôm nay => không cho tiếp tục
-        if (selectedDate < today) return false;
-
-        // nếu chọn ngày hôm nay, thì kiểm tra giờ bắt đầu >= giờ hiện tại
-        if (selectedDate.getTime() === today.getTime()) {
-            const [h, m] = bookingData.startTime.split(':').map(Number);
-            const selectedDateTime = new Date(bookingData.workDate);
-            selectedDateTime.setHours(h, m, 0, 0);
-            if (selectedDateTime < now) return false;
-        }
-
-        return true;
-    }, [bookingData.workDate, bookingData.startTime]);
+        const selected = new Date(bookingData.workDate);
+        selected.setHours(0, 0, 0, 0);
+        return selected >= today;
+    }, [bookingData.workDate]);
 
     useEffect(() => {
         const saved = getSavedBookingData();
@@ -157,8 +147,8 @@ const TimeStep = () => {
                     onClick={() => setModal({ type: 'calendar' })}
                     className="w-full p-3 bg-slate-100 rounded-lg text-slate-800 font-semibold text-left"
                 >
-                    {bookingData.startDate
-                        ? new Date(bookingData.startDate).toLocaleDateString(
+                    {bookingData.workDate
+                        ? new Date(bookingData.workDate).toLocaleDateString(
                               'vi-VN'
                           )
                         : 'Chọn ngày'}
@@ -193,9 +183,9 @@ const TimeStep = () => {
             <CalendarModal
                 isOpen={modal.type === 'calendar'}
                 onClose={() => setModal({ type: null })}
-                selectedDate={bookingData.startDate}
+                selectedDate={bookingData.workDate}
                 onSelectDate={(date) =>
-                    setBookingData({ ...bookingData, startDate: date })
+                    setBookingData({ ...bookingData, workDate: date })
                 }
             />
         </BookingLayout>
