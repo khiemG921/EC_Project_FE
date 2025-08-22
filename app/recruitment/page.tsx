@@ -46,7 +46,7 @@ const CareersPage = () => {
                             <div className="order-1 lg:order-2">
                                 <div className="aspect-w-16 aspect-h-9 relative rounded-2xl overflow-hidden shadow-xl">
                                     <img
-                                        src="https://www.btaskee.com/wp-content/uploads/2025/03/btaskee-thuong-xuyen-to-chuc-cac-cuoc-thi-cho-doi-ngu-chi-ong-cam-tranh-tai.jpg"
+                                        src="https://dichvuvesinhnhagiare.com/wp-content/uploads/2020/12/Ve-sinh-nha-o-ha-noi.jpg"
                                         alt="Nhóm dự án cleanNow"
                                         className="w-full h-full object-cover"
                                     />
