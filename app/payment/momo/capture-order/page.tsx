@@ -2,6 +2,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
 import Swal from 'sweetalert2';
+import { getVoucherCodeFromStorage } from '@/lib/paymentUtils';
 
 function MomoCaptureOrderContent() {
     const params = useSearchParams();
@@ -45,6 +46,7 @@ function MomoCaptureOrderContent() {
                 paymentGateway: 'MoMo',
                 status: 'COMPLETED',
                 paidAt: new Date().toISOString(),
+                voucher_code: getVoucherCodeFromStorage() || null,
             }),
         })
             .then(async (res) => {
@@ -64,6 +66,11 @@ function MomoCaptureOrderContent() {
                 }
                 // Sau khi thông báo, chuyển trang cha về history và đóng pop-up
                 if (window.opener) {
+                    // Xóa item sau khi đã đọc để tránh dùng lại dữ liệu cũ
+                    Object.keys(localStorage)
+                        .filter((key) => key.toLowerCase().includes('booking'))
+                        .forEach((key) => localStorage.removeItem(key));
+                        
                     window.opener.location.href = '/history';
                 }
                 window.close();

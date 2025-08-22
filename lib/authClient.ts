@@ -1,13 +1,3 @@
-// Xác thực mã đăng ký tài khoản
-export async function verifyRegisterCode(email: string, code: string) {
-  const response = await fetch(`${API_BASE_URL}/api/auth/verify-register-code`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, code }),
-  });
-  if (!response.ok) throw new Error("Mã xác thực không đúng hoặc hết hạn");
-  return response.json();
-}
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
@@ -21,6 +11,22 @@ import {
 import { auth } from "./firebase";
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || '');
+
+import fetchWithAuth from '@/lib/apiClient';
+import { clearAuthTokens } from './authUtils';
+
+const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '';
+
+// Xác thực mã đăng ký tài khoản
+export async function verifyRegisterCode(email: string, code: string) {
+  const response = await fetch(`${API_BASE_URL}/api/auth/verify-register-code`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, code }),
+  });
+  if (!response.ok) throw new Error("Mã xác thực không đúng hoặc hết hạn");
+  return response.json();
+}
 
 // Đăng ký user với email và mật khẩu
 export async function registerUser(email: unknown, password: unknown, name?: string, phone?: string) {
@@ -65,8 +71,6 @@ export async function loginUser(email: unknown, password: unknown) {
   const emailStr = String(email).trim();
   const passwordStr = String(password).trim();
   
-  console.log('Login attempt for:', emailStr);
-  
   try {
     // Đăng nhập Firebase
     console.log('url:', `${API_BASE_URL}`);
@@ -76,7 +80,7 @@ export async function loginUser(email: unknown, password: unknown) {
     const idToken = await result.user.getIdToken();
     
     // Lưu session vào backend
-    await saveSession(idToken);
+  await saveSession(idToken);
     console.log('Session saved successfully');
     
     return idToken;
@@ -142,13 +146,25 @@ async function registerGoogleUser(userData: {
 // Đăng xuất user
 export async function logoutUser() {
   try {
-    // Xóa session từ backend
-    await fetch(`${API_BASE_URL}/api/auth/session`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    // Đăng xuất khỏi Firebase
+    // sign out from Firebase to clear client auth state
     await signOut(auth);
+    // request backend to delete the server session
+    try {
+      await fetch('/api/auth/session', {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+    } catch (e) {
+      // ignore FE route errors but log for debugging
+      console.error('FE session delete failed:', e);
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        clearAuthTokens(); // Clear
+      } catch (e) {}
+      try { localStorage.removeItem('token'); } catch (e) {}
+    }
   } catch (error) {
     console.error("Logout error:", error);
     throw error;
@@ -191,12 +207,12 @@ export async function forceLogout() {
 export async function saveSession(idToken: string) {
   console.log('Saving session with token:', idToken.substring(0, 20) + '...');
   
-  const response = await fetch(`${API_BASE_URL}/api/auth/session`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idToken }),
-    credentials: "include",
-  });
+    const response = await fetch('/api/auth/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+      credentials: 'include',
+    });
   
   console.log('Save session response status:', response.status);
   
@@ -216,10 +232,10 @@ export async function verifyToken() {
   try {
     // Lấy Firebase token nếu user đã đăng nhập
     let headers: HeadersInit = {};
-    
+
     console.log('VerifyToken: Starting verification...');
     console.log('VerifyToken: auth.currentUser:', !!auth.currentUser);
-    
+
     if (auth.currentUser) {
       try {
         const token = await auth.currentUser.getIdToken();
@@ -232,16 +248,16 @@ export async function verifyToken() {
     } else {
       console.log('VerifyToken: No Firebase user logged in');
     }
-    
+
     console.log('VerifyToken: Making request to backend...');
     const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
       method: "GET",
       headers,
       credentials: "include",
     });
-    
+
     console.log('VerifyToken: Response status:', response.status);
-    
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.log('VerifyToken: Error response:', errorData);
@@ -250,7 +266,7 @@ export async function verifyToken() {
       }
       throw new Error("Failed to verify token");
     }
-    
+
     const result = await response.json();
     console.log('VerifyToken: Success, got user:', !!result.user);
     return result;
@@ -287,7 +303,7 @@ export async function syncUserToDatabase(firebaseUser: User) {
     const token = await firebaseUser.getIdToken();
     console.log('Got Firebase token for sync');
     
-    const response = await fetch(`${API_BASE_URL}/api/auth/sync-user`, {
+  const response = await fetchWithAuth('/api/auth/sync-user', {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

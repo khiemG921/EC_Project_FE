@@ -25,17 +25,7 @@ export const useWatchlistServices = () => {
     const fetchWatchlist = async () => {
       try {
         setLoading(true);
-        const token = await user.getIdToken();
-
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/watchlist`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
+  const response = await import('@/lib/apiClient').then(m => m.fetchWithAuth('/api/watchlist', { method: 'GET' }));
 
         if (response.ok) {
           const watchlistItems = await response.json();
@@ -76,16 +66,7 @@ export const useWatchlistServices = () => {
     }
 
     try {
-      const token = await user.getIdToken();
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/watchlist/${serviceId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+  const response = await import('@/lib/apiClient').then(m => m.fetchWithAuth(`/api/watchlist/${serviceId}`, { method: 'DELETE' }));
 
       if (response.ok) {
         setWatchlistServices((prev) => prev.filter((service) => Number(service.id) !== Number(serviceId)));
@@ -111,18 +92,7 @@ export const useWatchlistServices = () => {
       if (isServiceInWatchlist(serviceId)) {
         await removeWatchlist(serviceId);
       } else {
-        const token = await user.getIdToken();
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/watchlist`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ serviceId }),
-          }
-        );
+  const response = await import('@/lib/apiClient').then(m => m.fetchWithAuth('/api/watchlist', { method: 'POST', body: JSON.stringify({ serviceId }) }));
 
         if (response.ok) {
           const addedItem = await response.json();

@@ -1,5 +1,6 @@
 // lib/taskerApplicationApi.ts
 import { auth } from './firebase';
+import fetchWithAuth from '@/lib/apiClient';
 
 export interface TaskerApplication {
     id: string;
@@ -12,8 +13,7 @@ export interface TaskerApplication {
     status: 'pending' | 'approved' | 'rejected';
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
+// Using fetchWithAuth for base URL and auth
 // Hàm helper để lấy token với multiple attempts
 const getAuthToken = async (): Promise<string> => {
     const cookieToken = document.cookie
@@ -44,18 +44,14 @@ export const taskerApplicationApi = {
     // Gửi đơn đăng ký làm tasker
     async apply(skills: string): Promise<{ success: boolean; message: string; data?: TaskerApplication }> {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/tasker-applications/apply`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ skills }),
-            });
+                const response = await fetchWithAuth('/api/tasker-applications/apply', {
+                    method: 'POST',
+                    body: JSON.stringify({ skills }),
+                });
 
-            const result = await response.json();
-            return result;
-        } catch (error) {
+                const result = await response.json();
+                return result;
+            } catch (error) {
             console.error('Error applying for tasker:', error);
             return {
                 success: false,
@@ -67,14 +63,7 @@ export const taskerApplicationApi = {
     // Kiểm tra trạng thái đơn đăng ký của mình
     async getMyStatus(): Promise<{ success: boolean; data?: TaskerApplication }> {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/tasker-applications/my-status`, {
-                method: 'GET',
-                credentials: 'include', 
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
+            const response = await fetchWithAuth('/api/tasker-applications/my-status', { method: 'GET' });
             const result = await response.json();
             return result;
         } catch (error) {
@@ -96,14 +85,7 @@ export const adminTaskerApplicationApi = {
             if (status) params.append('status', status);
             if (search) params.append('search', search);
 
-            const response = await fetch(`${API_BASE_URL}/api/tasker-applications?${params}`, {
-                method: 'GET',
-                credentials: 'include', 
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
+            const response = await fetchWithAuth(`/api/tasker-applications?${params}`, { method: 'GET' });
             const result = await response.json();
             return result;
         } catch (error) {
@@ -117,14 +99,7 @@ export const adminTaskerApplicationApi = {
     // Duyệt đơn đăng ký
     async approve(id: string): Promise<{ success: boolean; message: string }> {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/tasker-applications/${id}/approve`, {
-                method: 'PUT',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
+            const response = await fetchWithAuth(`/api/tasker-applications/${id}/approve`, { method: 'PUT' });
             const result = await response.json();
             return result;
         } catch (error) {
@@ -139,14 +114,7 @@ export const adminTaskerApplicationApi = {
     // Từ chối đơn đăng ký
     async reject(id: string): Promise<{ success: boolean; message: string }> {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/tasker-applications/${id}/reject`, {
-                method: 'PUT',
-                credentials: 'include', 
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
+            const response = await fetchWithAuth(`/api/tasker-applications/${id}/reject`, { method: 'PUT' });
             const result = await response.json();
             return result;
         } catch (error) {

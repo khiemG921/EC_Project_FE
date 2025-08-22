@@ -29,7 +29,7 @@ const LoginPage = () => {
             // Đăng nhập qua Firebase
             const token = await loginUser(email, password);
             console.log('Login successful, verifying backend session...');
-            localStorage.setItem('token', token || 'demo-token');
+            // rely on Firebase auth state
             // Ensure backend session is set and valid before navigating (prevents middleware redirect)
             try {
                 // retry a few times because browser may need a tick to accept cookie
@@ -66,7 +66,6 @@ const LoginPage = () => {
     async function handleGoogleLogin() {
         // Nếu muốn test Google login thật, có thể gọi loginWithGoogle ở đây
         const token = await loginWithGoogle();
-        localStorage.setItem('token', token || 'demo-token');
         // Sau khi thành công, set user = MOCK_USER
         router.push('/dashboard');
     }

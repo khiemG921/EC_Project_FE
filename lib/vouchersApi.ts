@@ -1,5 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
+import fetchWithAuth from '@/lib/apiClient';
 import {Voucher, VoucherFilters} from '@/types/voucher'
 
 export async function fetchVouchers(filters: VoucherFilters = {}): Promise<Voucher[]> {
@@ -10,22 +9,13 @@ export async function fetchVouchers(filters: VoucherFilters = {}): Promise<Vouch
   if (discount !== undefined) params.set('discount', String(discount));
   if (serviceId) params.set('serviceId', serviceId);
 
-  const res = await fetch(`${API_BASE_URL}/api/vouchers?${params.toString()}`, {
-    credentials: 'include',
-    signal
-  });
+  const res = await fetchWithAuth(`/api/vouchers?${params.toString()}`, { signal });
   if (!res.ok) throw new Error('Fetch vouchers failed');
   return res.json();
 }
 
 export async function getVoucherStats() {
-  const res = await fetch(`${API_BASE_URL}/api/vouchers/stats`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-  });
+  const res = await fetchWithAuth('/api/vouchers/stats', { method: 'GET' });
 
   if (!res.ok) {
     throw new Error(`Failed to fetch voucher stats: ${res.status}`);
@@ -35,10 +25,7 @@ export async function getVoucherStats() {
 }
 
 export async function fetchVoucherSummary(signal?: AbortSignal) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vouchers/summary`, {
-    credentials: 'include',
-    signal
-  });
+  const res = await fetchWithAuth('/api/vouchers/summary', { signal });
   if (!res.ok) throw new Error('Fetch voucher summary failed');
   return res.json();
 }

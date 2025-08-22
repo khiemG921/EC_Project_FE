@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import DashboardHeader from '@/components/common/DashboardHeader';
 import Swal from 'sweetalert2';
+import { getVoucherCodeFromStorage } from '@/lib/paymentUtils';
 
 // Declare PayPal types for TypeScript
 declare global {
@@ -197,6 +198,7 @@ export default function PaymentPage() {
                                             paymentGateway: 'Paypal',
                                             status: transaction.status,
                                             paidAt: transaction.update_time,
+                                            voucher_code: getVoucherCodeFromStorage() || null
                                         }),
                                     }
                                 );
@@ -338,6 +340,21 @@ export default function PaymentPage() {
             console.warn('No jobId to cancel');
         }
 
+        // 2) Gọi API hoàn tiền CleanPay (refund) nếu đã sử dụng ví
+        try {
+            await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/api/customer/refund`,
+                {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: totalAmountVND }),
+                }
+            );
+        } catch (err) {
+            console.error('Refund CleanPay failed:', err);
+        }
+
         window.history.back(); // Quay lại trang trước đó trong lịch sử trình duyệt
     };
 
@@ -363,7 +380,22 @@ export default function PaymentPage() {
             console.warn('No jobId to cancel');
         }
 
-        // 2) Thông báo và điều hướng
+        // 2) Gọi API hoàn tiền CleanPay (refund) nếu đã sử dụng ví
+        try {
+            await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/api/customer/refund`,
+                {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: totalAmountVND }),
+                }
+            );
+        } catch (err) {
+            console.error('Refund CleanPay failed:', err);
+        }
+
+        // 3) Thông báo và điều hướng
         Swal.fire({
             text: 'Bạn đã hủy thanh toán.',
             icon: 'warning',

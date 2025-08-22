@@ -27,14 +27,7 @@ export const useFavoriteServices = () => {
     const fetchFavorites = async () => {
       try {
         setLoading(true);
-        const token = await user.getIdToken();
-        
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/favorite/list`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+  const response = await import('@/lib/apiClient').then(m => m.fetchWithAuth('/api/favorite/list', { method: 'GET' }));
 
         if (response.ok) {
           const data = await response.json();
@@ -69,14 +62,10 @@ export const useFavoriteServices = () => {
       // Use add or remove endpoint based on current state
       const endpoint = isFavorite ? '/api/favorite/remove' : '/api/favorite/add';
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
+      const response = await import('@/lib/apiClient').then(m => m.fetchWithAuth(endpoint, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ serviceId }),
-      });
+      }));
 
       if (response.ok) {
         setFavorites(prev => 

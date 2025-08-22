@@ -16,28 +16,26 @@ import {
     Tag,
     Bookmark,
 } from 'lucide-react';
-import { useUser } from '@/hooks/useUser';
-import { logoutUser } from '../lib/authClient';
+import { useAuth } from '@/providers/auth_provider';
 
 // Header component cho trang chủ
 // --- COMPONENT HEADER ---
 // Component này tự quản lý trạng thái đăng nhập và hiển thị UI tương ứng.
 export function Header() {
-    const { user, loading } = useUser();
+    const { user, loading, logout } = useAuth();
     const [isMenuOpen, setMenuOpen] = useState(false);
     const router = useRouter();
 
     const handleLogout = async () => {
         try {
-            await logoutUser(); // gọi DELETE /api/auth/session ở backend
+            await logout();
         } catch (e) {
             console.error('Logout failed:', e);
         } finally {
-            // client cleanup (tùy file có state quản lý user)
             try {
                 window.localStorage.removeItem('token');
             } catch {}
-            router.push('/auth/login');
+            router.push('/');
         }
     };
 
@@ -167,13 +165,13 @@ export function Header() {
                                                 <div className="mt-1">
                                                     <span className="inline-block px-2 py-1 bg-teal-100 text-teal-700 text-xs rounded-full">
                                                         {user.roles?.[0] ===
-                                                        'customer'
+                                                            'customer'
                                                             ? 'Khách hàng'
                                                             : user
-                                                                  .roles?.[0] ===
-                                                              'tasker'
-                                                            ? 'Tasker'
-                                                            : 'Admin'}
+                                                                .roles?.[0] ===
+                                                                'tasker'
+                                                                ? 'Tasker'
+                                                                : 'Admin'}
                                                     </span>
                                                 </div>
                                             </div>

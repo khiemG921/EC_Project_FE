@@ -49,6 +49,12 @@ export default function RootLayout({
           src="https://cdn.jsdelivr.net/npm/@goongmaps/goong-js@1.0.9/dist/goong-js.js"
           strategy="beforeInteractive"
         />
+
+        {/* Load GoongJS trước khi bất cứ component map nào mount */}
+        <Script
+          src="https://cdn.jsdelivr.net/npm/goong-js@latest/dist/goong-js.min.js"
+          strategy="beforeInteractive"
+        />
       </head>
       <body className="bg-white" suppressHydrationWarning={true}>
         <ClientProviders>

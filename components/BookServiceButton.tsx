@@ -1,5 +1,6 @@
 // Component dành cho Trang chủ để đặt dịch vụ dọn dẹp với kiểm tra đăng nhập
 import React from 'react';
+import { auth } from '@/lib/firebase';
 
 interface BookServiceButtonProps {
     bookingUrl?: string;
@@ -8,8 +9,8 @@ interface BookServiceButtonProps {
 const BookServiceButton: React.FC<BookServiceButtonProps> = ({ bookingUrl }) => {
     const handleClick = () => {
         if (typeof window !== 'undefined') {
-            const token = localStorage.getItem('token');
-            if (!token) {
+            const isLogged = !!auth.currentUser;
+            if (!isLogged) {
                 window.location.href = '/auth/login';
                 return;
             }

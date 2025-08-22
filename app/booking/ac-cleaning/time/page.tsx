@@ -167,6 +167,7 @@ export default function ACTimeStep() {
                     setBookingData({ ...bookingData, startTime: time });
                     closeModal();
                 }}
+                selectedDate={bookingData.workDate}
             />
             <BookingLayout
                 title={serviceInfo.name}

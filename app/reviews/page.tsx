@@ -71,8 +71,7 @@ const CustomModal = ({ message, onClose }: { message: string; onClose: () => voi
 function ServiceDetailContent() {
   const searchParams = useSearchParams();
   const serviceId = searchParams.get('serviceId');
-  const API_BASE_URL = 'http://localhost:5000/api';
-
+const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || 'https://ecprojectbe-production.up.railway.app';
   const [service, setService] = useState<Service | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);

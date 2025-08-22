@@ -1,12 +1,8 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+import fetchWithAuth from '@/lib/apiClient';
 import type { User } from '@/types/user';
 
 export async function fetchUsers(): Promise<User[]> {
-    const res = await fetch(`${API_BASE_URL}/api/admin/customers/getAllUser`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // forward cookies for auth
-    });
+    const res = await fetchWithAuth('/api/admin/customers/getAllUser', { method: 'GET' });
     if (!res.ok)
         throw new Error(
             `Không thể tải danh sách người dùng: ${res.status} ${res.statusText}`
@@ -46,11 +42,9 @@ export async function createUser(data: User): Promise<User> {
         reward_points: data.rewardPoints || 0,
     };
 
-    const res = await fetch(`${API_BASE_URL}/api/admin/customers/createUser`, {
+    const res = await fetchWithAuth('/api/admin/customers/createUser', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(backendData),
-        credentials: 'include',
     });
     if (!res.ok)
         throw new Error(
@@ -93,15 +87,10 @@ export async function updateUser(
     if (data.rewardPoints !== undefined)
         backendData.reward_points = data.rewardPoints;
 
-    const res = await fetch(
-        `${API_BASE_URL}/api/admin/customers/updateUser/${id}`,
-        {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(backendData),
-            credentials: 'include',
-        }
-    );
+    const res = await fetchWithAuth(`/api/admin/customers/updateUser/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(backendData),
+    });
     if (!res.ok)
         throw new Error(
             `Không thể cập nhật người dùng: ${res.status} ${res.statusText}`
@@ -128,13 +117,9 @@ export async function updateUser(
 }
 
 export async function deleteUser(id: string): Promise<void> {
-    const res = await fetch(
-        `${API_BASE_URL}/api/admin/customers/deleteUser/${id}`,
-        {
-            method: 'DELETE',
-            credentials: 'include',
-        }
-    );
+    const res = await fetchWithAuth(`/api/admin/customers/deleteUser/${id}`, {
+        method: 'DELETE',
+    });
     if (!res.ok)
         throw new Error(
             `Không thể xóa người dùng: ${res.status} ${res.statusText}`
@@ -142,15 +127,10 @@ export async function deleteUser(id: string): Promise<void> {
 }
 
 export async function setRoleUser(id: string, role: string): Promise<void> {
-    const res = await fetch(
-        `${API_BASE_URL}/api/admin/customers/setRole/${id}`,
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ role }),
-            credentials: 'include',
-        }
-    );
+    const res = await fetchWithAuth(`/api/admin/customers/setRole/${id}`, {
+        method: 'POST',
+        body: JSON.stringify({ role }),
+    });
     if (!res.ok)
         throw new Error(
             `Không thể cập nhật vai trò người dùng: ${res.status} ${res.statusText}`

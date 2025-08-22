@@ -4,8 +4,10 @@ import React, { useEffect, useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { getCrawlerStatus, updateCrawlerConfig, runCrawlerNow, getCsvDownloadUrl } from '@/lib/crawlerApi';
 
+const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || 'https://ecprojectbe-production.up.railway.app';
+
 async function importLatest(maxTotal?: number) {
-    const r = await fetch('http://localhost:5000/api/news-import/import-latest', {
+    const r = await fetch(`${API_BASE_URL}/news-import/import-latest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ maxTotal }),

@@ -1,29 +1,73 @@
 // app/booking/hourly-cleaning/confirm/page.tsx
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
 import BookingLayout from '../../../../components/booking/BookingLayout';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Wallet } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 // --- DỮ LIỆU DỊCH VỤ ---
 const allPricingOptions = [
-    { id: 1, service_id: 1, type: "Thời Lượng", name: "2 Giờ - Tối đa 60m^2", hours: 2 },
-    { id: 2, service_id: 1, type: "Thời Lượng", name: "3 Giờ - Tối đa 90m^2", hours: 3 },
-    { id: 3, service_id: 1, type: "Thời Lượng", name: "4 Giờ - Tối đa 110m^2", hours: 4 },
-    { id: 4, service_id: 1, type: "Tùy Chọn", name: "Sử dụng máy hút bụi" },
-    { id: 99, service_id: 1, type: "Tùy Chọn", name: "Dụng cụ & Chất tẩy rửa cơ bản" },
-    { id: 5, service_id: 1, type: "Dịch Vụ Thêm", name: "Nấu ăn", hours: 1, icon: "fas fa-utensils" },
-    { id: 6, service_id: 1, type: "Dịch Vụ Thêm", name: "Giặt ủi", hours: 1, icon: "fas fa-tshirt" },
+    {
+        id: 1,
+        service_id: 1,
+        type: 'Thời Lượng',
+        name: '2 Giờ - Tối đa 60m^2',
+        hours: 2,
+    },
+    {
+        id: 2,
+        service_id: 1,
+        type: 'Thời Lượng',
+        name: '3 Giờ - Tối đa 90m^2',
+        hours: 3,
+    },
+    {
+        id: 3,
+        service_id: 1,
+        type: 'Thời Lượng',
+        name: '4 Giờ - Tối đa 110m^2',
+        hours: 4,
+    },
+    { id: 4, service_id: 1, type: 'Tùy Chọn', name: 'Sử dụng máy hút bụi' },
+    {
+        id: 99,
+        service_id: 1,
+        type: 'Tùy Chọn',
+        name: 'Dụng cụ & Chất tẩy rửa cơ bản',
+    },
+    {
+        id: 5,
+        service_id: 1,
+        type: 'Dịch Vụ Thêm',
+        name: 'Nấu ăn',
+        hours: 1,
+        icon: 'fas fa-utensils',
+    },
+    {
+        id: 6,
+        service_id: 1,
+        type: 'Dịch Vụ Thêm',
+        name: 'Giặt ủi',
+        hours: 1,
+        icon: 'fas fa-tshirt',
+    },
 ];
 
 const serviceOptions = {
-    duration: allPricingOptions.filter(p => p.service_id === 1 && p.type === 'Thời Lượng'),
-    extra: allPricingOptions.filter(p => p.service_id === 1 && p.type === 'Dịch Vụ Thêm'),
-    other: allPricingOptions.filter(p => p.service_id === 1 && p.type === 'Tùy Chọn'),
+    duration: allPricingOptions.filter(
+        (p) => p.service_id === 1 && p.type === 'Thời Lượng'
+    ),
+    extra: allPricingOptions.filter(
+        (p) => p.service_id === 1 && p.type === 'Dịch Vụ Thêm'
+    ),
+    other: allPricingOptions.filter(
+        (p) => p.service_id === 1 && p.type === 'Tùy Chọn'
+    ),
 };
 
-const serviceInfo = { id: 1, name: "Giúp Việc Ca Lẻ" };
+const serviceInfo = { id: 1, name: 'Giúp Việc Ca Lẻ' };
 
 const ConfirmationPage = () => {
     const router = useRouter();
@@ -43,6 +87,33 @@ const ConfirmationPage = () => {
     const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
     const [promoCode, setPromoCode] = useState('');
     const [isDataRestored, setIsDataRestored] = useState(false);
+
+    // --- State cho ví CleanPay ---
+    const [walletBalance, setWalletBalance] = useState(0);
+    const [useWallet, setUseWallet] = useState(false);
+
+    // --- Fetch số dư ví CleanPay (reward_points) ---
+    useEffect(() => {
+        let aborted = false;
+        (async () => {
+            try {
+                const res = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/customer/reward-points`,
+                    { credentials: 'include' }
+                );
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (!aborted) {
+                    setWalletBalance(Number(data?.reward_points) || 0);
+                }
+            } catch (err) {
+                console.error('Failed to fetch CleanPay balance:', err);
+            }
+        })();
+        return () => {
+            aborted = true;
+        };
+    }, []);
 
     // Khôi phục booking data từ localStorage khi mount
     useEffect(() => {
@@ -124,11 +195,14 @@ const ConfirmationPage = () => {
 
                     console.log('Checkout payload:', payload);
 
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/booking/hourly/checkout`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload),
-                    });
+                    const res = await fetch(
+                        `${process.env.NEXT_PUBLIC_API_URL}/api/booking/hourly/checkout`,
+                        {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload),
+                        }
+                    );
                     const data = await res.json();
                     console.log('Checkout result:', data);
                     setCheckoutResult(data);
@@ -213,6 +287,10 @@ const ConfirmationPage = () => {
             ?.unitPrice ?? 0;
     const totalPrice = checkoutResult?.totalPrice || 0;
 
+    // Compute pricing with wallet
+    const walletDeduction = useWallet ? Math.min(totalPrice, walletBalance) : 0;
+    const remainingAmount = totalPrice - walletDeduction;
+
     const goToPromo = () => {
         router.push(
             `/promo?service=hourly&returnUrl=${encodeURIComponent(
@@ -230,33 +308,55 @@ const ConfirmationPage = () => {
         // 1) Tạo Job trên backend
         try {
             // 1) Tạo Job trên backend
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/job/create`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({
-                    serviceId: serviceInfo.id,
-                    serviceDetailId:
-                        checkoutResult && checkoutResult.breakdown && checkoutResult.breakdown.length > 0
-                            ? checkoutResult.breakdown.map((item: any) => item.detail_id).join(',')
-                            : null,
-                    description: checkoutResult && checkoutResult.breakdown && checkoutResult.breakdown.length > 0
-                        ? checkoutResult.breakdown
-                              .map((item: any) => `(${item.name}) x ${bookingData.staffCount}`)
-                              .join(', ')
-                        : null,
-                    location: bookingData.address,
-                    totalDuration: totalDuration,
-                }),
-            });
+            const res = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/api/job/create`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        serviceId: serviceInfo.id,
+                        serviceDetailId:
+                            checkoutResult &&
+                            checkoutResult.breakdown &&
+                            checkoutResult.breakdown.length > 0
+                                ? checkoutResult.breakdown
+                                      .map((item: any) => item.detail_id)
+                                      .join(',')
+                                : null,
+                        description:
+                            checkoutResult &&
+                            checkoutResult.breakdown &&
+                            checkoutResult.breakdown.length > 0
+                                ? checkoutResult.breakdown
+                                      .map(
+                                          (item: any) =>
+                                              `(${item.name}) x ${bookingData.staffCount}`
+                                      )
+                                      .join(', ')
+                                : null,
+                        location: bookingData.address,
+                        totalDuration: totalDuration,
+                    }),
+                }
+            );
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+            console.log('Create job response:', res);
 
             // 2) Chuyển sang trang payment
             const job = await res.json();
-            localStorage.setItem('paymentInfo', JSON.stringify({
-                totalPrice: totalPrice,
-                jobId: job.job_id,
-            }));
-            router.push(`/payment`);
+            localStorage.setItem(
+                'paymentInfo',
+                JSON.stringify({
+                    totalPrice: remainingAmount,
+                    jobId: job.job_id,
+                    usedCleanCoin: useWallet ? walletDeduction : 0,
+                    voucher_code: bookingData.promoCode || '',
+                })
+            );
+            router.push('/payment');
         } catch (err) {
             console.error('Failed to create job:', err);
             Swal.fire({
@@ -329,7 +429,9 @@ const ConfirmationPage = () => {
                                     aria-label="Loading"
                                 />
                             ) : (
-                                `${(checkoutResult.totalPrice ?? 0).toLocaleString()}đ`
+                                `${(
+                                    checkoutResult.totalPrice ?? 0
+                                ).toLocaleString()}đ`
                             )}
                         </p>
                     </div>
@@ -443,23 +545,7 @@ const ConfirmationPage = () => {
                         </>
                     )}
                 </div>
-
                 <div className="bg-white rounded-xl p-4 space-y-3">
-                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                        <i className="fas fa-money-bill-wave text-emerald-500"></i>
-                        CHI TIẾT THANH TOÁN
-                    </h3>
-                    <div className="flex justify-between">
-                        <span>Tạm tính</span>
-                        <span className="font-semibold">
-                            {(
-                                checkoutResult?.totalPrice +
-                                    checkoutResult?.discount || '___'
-                            ).toLocaleString()}
-                            đ
-                        </span>
-                    </div>
-
                     <div
                         onClick={goToPromo}
                         className="flex justify-between items-center text-emerald-600 cursor-pointer py-2 border border-emerald-200 rounded-lg px-3 hover:bg-emerald-50 transition-colors"
@@ -482,12 +568,85 @@ const ConfirmationPage = () => {
                             </span>
                         </div>
                     )}
+                    {/* --- ví CleanPay --- */}
+                    <div className="pt-2 border-t border-slate-200 mt-4">
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                                <Wallet size={18} className="text-teal-500" />
+                                <div>
+                                    <p
+                                        className={`font-semibold ${
+                                            walletBalance > 0
+                                                ? 'text-slate-700'
+                                                : 'text-slate-400'
+                                        }`}
+                                    >
+                                        Ví CleanPay
+                                    </p>
+                                    <p className="text-xs text-slate-500">
+                                        Số dư: {walletBalance.toLocaleString()}đ
+                                        {walletBalance === 0 && (
+                                            <span className="text-red-500 ml-2">
+                                                Không đủ CleanCoin
+                                            </span>
+                                        )}
+                                    </p>
+                                </div>
+                            </div>
+                            <label
+                                htmlFor="useWalletToggle"
+                                className="relative inline-flex items-center cursor-pointer"
+                            >
+                                <input
+                                    type="checkbox"
+                                    id="useWalletToggle"
+                                    className="sr-only peer"
+                                    checked={useWallet}
+                                    onChange={() => setUseWallet(!useWallet)}
+                                    disabled={walletBalance === 0}
+                                />
+                                <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-teal-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500 peer-disabled:cursor-not-allowed peer-disabled:bg-slate-100"></div>
+                            </label>
+                        </div>
+                        {useWallet && walletBalance > 0 && (
+                            <div className="flex justify-between text-blue-600 mt-2">
+                                <span>Sử dụng CleanCoin</span>
+                                <span>
+                                    -{walletDeduction.toLocaleString()}đ
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                </div>
 
+                <div className="bg-white rounded-xl p-4 space-y-3">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                        <i className="fas fa-money-bill-wave text-emerald-500"></i>
+                        THANH TOÁN
+                    </h3>
+                    <div className="flex justify-between">
+                        <span>Tạm tính</span>
+                        <span className="font-semibold">
+                            {(
+                                checkoutResult?.totalPrice +
+                                    checkoutResult?.discount || '___'
+                            ).toLocaleString()}
+                            đ
+                        </span>
+                    </div>
+                    {bookingData.promoCode && (
+                        <div className="flex justify-between text-green-600">
+                            <span>Giảm giá voucher</span>
+                            <span>
+                                -{checkoutResult?.discount.toLocaleString()}đ
+                            </span>
+                        </div>
+                    )}
                     <hr className="border-emerald-100" />
                     <div className="flex justify-between font-bold text-slate-800 text-lg">
-                        <span>Tổng cộng</span>
+                        <span>Thành tiền</span>
                         <span className="text-emerald-600">
-                            {totalPrice.toLocaleString()}đ
+                            {(totalPrice - walletDeduction).toLocaleString()}đ
                         </span>
                     </div>
                 </div>

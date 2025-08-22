@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { fetchProfile, updateProfile, uploadAvatar} from '@/lib/profileUser';
-import { logoutUser } from '@/lib/authClient';
+import { logoutUser, verifyToken } from '@/lib/authClient';
 
 export function useUser() {
   const [user, setUser] = useState<any>(null);
@@ -21,9 +21,33 @@ export function useUser() {
     }
   }, []);
 
-  // Fetch profile khi component mount (reload)
   useEffect(() => {
-    refetchProfile();
+    let mounted = true;
+    (async () => {
+      setLoading(true);
+      try {
+        const verified = await verifyToken().catch(() => null);
+        if (mounted && verified && verified.user) {
+          const roles = Array.isArray(verified.user.roles) ? verified.user.roles : [verified.user.roles || 'customer'];
+          setUser({ ...verified.user, roles });
+          setLoading(false);
+          return;
+        }
+      } catch (e) {
+        // ignore and fallback
+      }
+
+      // fallback to existing behavior
+      try {
+        await refetchProfile();
+      } catch (e) {
+        // refetchProfile handles setting user to null
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+
+    return () => { mounted = false; };
   }, [refetchProfile]);
 
   // Khi update profile thành công, refetch lại

@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { MapPin, Clock, CheckCircle2, Search, Briefcase, SlidersHorizontal, Shield, FileText } from 'lucide-react';
+import fetchWithAuth from '@/lib/apiClient';
 import DashboardHeader from '@/components/common/DashboardHeader';
 import { useUser } from '@/hooks/useUser';
 import { Button } from '@/components/ui/button';
@@ -96,7 +97,7 @@ const JobCard = ({ job, onAccept, onView, accepting }: { job: TaskerJob; onAccep
 
 // --- Thành phần chính: Trang nhận việc ---
 const FindJobsPage = () => {
-    const { user, loading } = useUser();
+    const { user, loading, logoutUser } = useUser();
     const [jobs, setJobs] = useState<TaskerJob[]>([]);
 
     // State cho bộ lọc dịch vụ, thành phố, tìm kiếm
@@ -117,9 +118,7 @@ const FindJobsPage = () => {
     // Hàm lấy danh sách công việc từ API
     const fetchJobs = useCallback(async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tasker/jobs?city=${city}`, {
-                credentials: 'include'
-            });
+            const res = await fetchWithAuth(`/api/tasker/jobs?city=${city}`, { method: 'GET' });
             if (!res.ok) throw new Error('Không thể tải danh sách công việc');
             const data = await res.json();
             setJobs((data.data || []) as TaskerJob[]);
@@ -137,10 +136,7 @@ const FindJobsPage = () => {
     const acceptJob = async (jobId: number) => {
         try {
             setAcceptingId(jobId);
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tasker/jobs/${jobId}/accept`, {
-                method: 'POST',
-                credentials: 'include'
-            });
+            const res = await fetchWithAuth(`/api/tasker/jobs/${jobId}/accept`, { method: 'POST' });
             if (!res.ok) throw new Error('Không thể nhận việc');
             setJobs(prev => prev.map(j => j.job_id === jobId ? { ...j, accepted: true } : j));
         } catch (e) {
@@ -156,7 +152,7 @@ const FindJobsPage = () => {
         setDetailLoading(true);
         setDetailError(null);
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tasker/jobs/${jobId}`, { credentials: 'include' });
+            const res = await fetchWithAuth(`/api/tasker/jobs/${jobId}`, { method: 'GET' });
             if (!res.ok) {
                 if (res.status === 403) throw new Error('Bạn không có quyền xem chi tiết công việc này.');
                 if (res.status === 404) throw new Error('Không tìm thấy công việc.');
@@ -178,7 +174,7 @@ const FindJobsPage = () => {
         if (policy) return; // Đã có dữ liệu thì không gọi lại
         setPolicyLoading(true);
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tasker/regulations`, { credentials: 'include' });
+            const res = await fetchWithAuth('/api/tasker/regulations', { method: 'GET' });
             if (!res.ok) throw new Error('Không thể tải quy định');
             const data = await res.json();
             setPolicy(data);
@@ -230,7 +226,7 @@ const FindJobsPage = () => {
     if (!isTasker) {
         return (
             <div className="min-h-screen bg-slate-50 font-sans">
-                <DashboardHeader user={user} onLogout={() => { }} activeRole={user.roles[0]} onRoleChange={() => { }} showRoleSwitcher={user.roles.length > 1} />
+                <DashboardHeader user={user} onLogout={logoutUser} activeRole={user.roles[0]} onRoleChange={() => { }} showRoleSwitcher={user.roles.length > 1} />
                 <main className="container mx-auto p-6 lg:p-8">
                     <div className="text-center py-16 px-6 bg-white rounded-2xl shadow-sm border border-slate-100">
                         <h2 className="text-xl font-semibold text-slate-700">Bạn không có quyền truy cập trang này</h2>
@@ -247,7 +243,7 @@ const FindJobsPage = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans">
-            <DashboardHeader user={user} onLogout={() => { }} activeRole="tasker" onRoleChange={() => { }} showRoleSwitcher={user.roles.length > 1} />
+            <DashboardHeader user={user} onLogout={logoutUser} activeRole="tasker" onRoleChange={() => { }} showRoleSwitcher={user.roles.length > 1} />
 
             <main className="container mx-auto p-6 lg:p-8">
                 <header className="mb-8">
