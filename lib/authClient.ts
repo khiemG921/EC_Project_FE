@@ -20,9 +20,8 @@ import {
 } from "firebase/auth";
 import { auth } from "./firebase";
 
-const API_BASE_URL = typeof window !== 'undefined'
-  ? ''
-  : (process.env.NEXT_PUBLIC_API_URL || '');
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || '');
+
 // Đăng ký user với email và mật khẩu
 export async function registerUser(email: unknown, password: unknown, name?: string, phone?: string) {
   const emailStr = String(email).trim();
@@ -70,11 +69,11 @@ export async function loginUser(email: unknown, password: unknown) {
   
   try {
     // Đăng nhập Firebase
+    console.log('url:', `${API_BASE_URL}`);
+
     const result = await signInWithEmailAndPassword(auth, emailStr, passwordStr);
-    console.log('Firebase login successful:', result.user.uid);
     
     const idToken = await result.user.getIdToken();
-    console.log('Got Firebase token:', idToken.substring(0, 20) + '...');
     
     // Lưu session vào backend
     await saveSession(idToken);
@@ -93,9 +92,7 @@ export async function loginWithGoogle() {
   const result = await signInWithPopup(auth, provider);
   const user = result.user;
   const idToken = await user.getIdToken();
-  
-  // Kiểm tra xem user đã có trong database chưa
-  // Nếu chưa thì tạo mới (tương tự register)
+
   try {
     // Thử verify token trước
     await saveSession(idToken);
