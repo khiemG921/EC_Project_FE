@@ -332,10 +332,10 @@ export function Footer({ services }: FooterProps) {
                                     className="mr-3 flex-shrink-0"
                                 />
                                 <a
-                                    href="tel:19001234"
+                                    href="tel:19008888"
                                     className="text-gray-400 hover:text-white transition-colors"
                                 >
-                                    1900 1234
+                                    1900 8888
                                 </a>
                             </li>
                         </ul>
