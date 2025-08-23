@@ -290,7 +290,16 @@ export default function AdminCustomersPage() {
                                                     <input
                                                         type="checkbox"
                                                         checked={(user.roles || []).includes('admin')}
-                                                        onChange={(e) => toggleRole(user.id, 'admin', e.target.checked)}
+                                                        onChange={(e) => {
+                                                            const next = e.target.checked;
+                                                            if (next) {
+                                                                alert('Không được phép cấp quyền admin');
+                                                                // revert UI state by forcing a refresh of users state (no-op set)
+                                                                setUsers(prev => [...prev]);
+                                                                return;
+                                                            }
+                                                            toggleRole(user.id, 'admin', next);
+                                                        }}
                                                         aria-label="Admin role"
                                                     />
                                                     <span className="text-sm">Admin</span>

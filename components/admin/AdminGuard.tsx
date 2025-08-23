@@ -18,6 +18,7 @@ export default function AdminGuard({ children }: AdminGuardProps) {
     const [isAdmin, setIsAdmin] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [checking, setChecking] = useState(true);
+    const [booted, setBooted] = useState(false);
 
     // verify existing session cookie
     useEffect(() => {
@@ -41,6 +42,7 @@ export default function AdminGuard({ children }: AdminGuardProps) {
                 setIsAdmin(false);
             } finally {
                 if (mounted) setChecking(false);
+                setBooted(true);
             }
         })();
         return () => { mounted = false; };
@@ -61,7 +63,7 @@ export default function AdminGuard({ children }: AdminGuardProps) {
             // Login with Firebase and persist session cookie in backend
             await loginUser(loginForm.email, loginForm.password);
 
-            // Verify session and role
+            // Verify session and role immediately
             try {
                 const result = await verifyBackendToken();
                 const roles: string[] = result?.user?.roles || [];
