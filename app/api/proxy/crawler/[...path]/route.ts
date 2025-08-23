@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(req: NextRequest, { params }: { params: { path: string[] } }) {
-  return handle(req, params, 'GET');
+export async function GET(req: NextRequest, context: any) {
+  return handle(req, context?.params, 'GET');
 }
-export async function POST(req: NextRequest, { params }: { params: { path: string[] } }) {
-  return handle(req, params, 'POST');
+export async function POST(req: NextRequest, context: any) {
+  return handle(req, context?.params, 'POST');
 }
-export async function PUT(req: NextRequest, { params }: { params: { path: string[] } }) {
-  return handle(req, params, 'PUT');
+export async function PUT(req: NextRequest, context: any) {
+  return handle(req, context?.params, 'PUT');
 }
 
-async function handle(req: NextRequest, params: { path: string[] }, method: 'GET'|'POST'|'PUT') {
+async function handle(req: NextRequest, params: any, method: 'GET'|'POST'|'PUT') {
   try {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://ecprojectbe-production.up.railway.app';
     const cronKey = process.env.CRON_SECRET;
-    const sub = params.path?.join('/') || '';
+  const sub = params?.path?.join('/') || '';
 
     // Forward body if present
     const hasBody = method !== 'GET';
