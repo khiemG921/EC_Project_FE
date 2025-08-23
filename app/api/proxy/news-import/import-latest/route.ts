@@ -1,3 +1,4 @@
+import fetchWithAuth from '@/lib/apiClient';
 import { NextRequest, NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -9,7 +10,7 @@ export async function POST(req: NextRequest) {
 
     // Verify admin via backend before forwarding
     try {
-      const verifyResp = await fetch(`${apiBase}/api/auth/verify`, {
+      const verifyResp = await fetchWithAuth(`${apiBase}/api/auth/verify`, {
         method: 'GET',
         headers: {
           cookie: req.headers.get('cookie') || '',
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const maxTotal = body?.maxTotal;
 
-    const resp = await fetch(`${apiBase}/news-import/import-latest`, {
+    const resp = await fetchWithAuth(`${apiBase}/news-import/import-latest`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

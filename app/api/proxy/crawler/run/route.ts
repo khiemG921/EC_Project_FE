@@ -1,3 +1,4 @@
+import fetchWithAuth from '@/lib/apiClient';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -8,7 +9,7 @@ export async function POST(req: NextRequest) {
   const cronKey = (globalThis as any)?.process?.env?.CRON_SECRET;
 
   // Verify admin via backend
-  const verifyResp = await fetch(`${apiBase}/api/auth/verify`, {
+  const verifyResp = await fetchWithAuth(`${apiBase}/api/auth/verify`, {
     method: 'GET',
     headers: { cookie: req.headers.get('cookie') || '', authorization: req.headers.get('authorization') || '' },
     cache: 'no-store',

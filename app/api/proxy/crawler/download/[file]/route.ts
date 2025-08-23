@@ -1,3 +1,4 @@
+import fetchWithAuth from '@/lib/apiClient';
 import { NextRequest } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -11,7 +12,7 @@ export async function GET(req: NextRequest, context: any) {
   const headers: Record<string, string> = {};
   if (cronKey) headers['x-cron-key'] = cronKey;
 
-  const resp = await fetch(`${apiBase}/api/crawler/download/${file}`, { method: 'GET', headers, cache: 'no-store' });
+  const resp = await fetchWithAuth(`${apiBase}/api/crawler/download/${file}`, { method: 'GET', headers, cache: 'no-store' });
   const blob = await resp.arrayBuffer();
   return new Response(blob, {
     status: resp.status,
