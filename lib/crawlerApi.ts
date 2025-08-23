@@ -1,5 +1,5 @@
 import fetchWithAuth from '@/lib/apiClient';
-const BASE = `/api/crawler`;
+const BASE = `/api/proxy/crawler`;
 
 export async function getCrawlerStatus() {
   const r = await fetchWithAuth(`${BASE}/status`, { method: 'GET', cache: 'no-store' });
