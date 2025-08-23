@@ -49,7 +49,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         { label: 'Yêu thích', icon: Heart, href: '/favorite' },
         { label: 'Xem sau', icon: Bookmark, href: '/watchlist' },
         { label: 'Ưu đãi', icon: Tag, href: '/vouchers' },
-        { label: 'Cài đặt', icon: Settings, href: '/settings' },
+        // { label: 'Cài đặt', icon: Settings, href: '/settings' },
     ];
 
     // Handle click outside to close menu
