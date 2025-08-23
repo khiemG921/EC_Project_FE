@@ -76,7 +76,7 @@ export function Header() {
             { label: 'Yêu thích', icon: Heart, href: '/favorite' },
             { label: 'Xem sau', icon: Bookmark, href: '/watchlist' },
             { label: 'Ưu đãi', icon: Tag, href: '/vouchers' },
-            { label: 'Cài đặt', icon: Settings, href: '/settings' }
+            // { label: 'Cài đặt', icon: Settings, href: '/settings' }
         );
         if (user.roles?.includes('tasker')) {
             userMenuItems.push({
