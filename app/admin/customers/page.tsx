@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import type { User } from '@/types/user';
-import { fetchUsers, deleteUser, setRoleUser } from '@/lib/admin/users';
+import { fetchUsers, deleteUser, grantRoleUser, revokeRoleUser, updateUser as updateUserApi } from '@/lib/admin/users';
 
 function getErrorMessage(err: unknown): string {
     if (!err) return '';
@@ -93,6 +93,7 @@ export default function AdminCustomersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [editing, setEditing] = useState<User | null>(null);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState<'all' | string>('all');
@@ -146,12 +147,10 @@ export default function AdminCustomersPage() {
         }
     };
 
-    const handleChangeRole = async (id: string, role: string) => {
+    const toggleRole = async (id: string, role: 'admin' | 'tasker', enable: boolean) => {
         try {
-            await setRoleUser(id, role);
-            setUsers((prev) =>
-                prev.map((u) => (u.id === id ? { ...u, roles: [role] } : u))
-            );
+            const roles = enable ? await grantRoleUser(id, role) : await revokeRoleUser(id, role);
+            setUsers(prev => prev.map(u => u.id === id ? { ...u, roles } : u));
         } catch (err: unknown) {
             alert(getErrorMessage(err) || 'Không thể cập nhật vai trò');
         }
@@ -234,7 +233,7 @@ export default function AdminCustomersPage() {
                                 <th className="px-4 py-3">Người dùng</th>
                                 <th className="px-4 py-3">Email</th>
                                 <th className="px-4 py-3">SĐT</th>
-                                <th className="px-4 py-3">Vai trò</th>
+                                <th className="px-4 py-3">Quyền</th>
                                 <th className="px-4 py-3">Điểm thưởng</th>
                                 <th className="px-4 py-3">Hành động</th>
                             </tr>
@@ -282,29 +281,24 @@ export default function AdminCustomersPage() {
                                             {user.phone || '—'}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <select
-                                                value={
-                                                    user.roles?.[0] ||
-                                                    'customer'
-                                                }
-                                                onChange={(e) =>
-                                                    handleChangeRole(
-                                                        user.id,
-                                                        e.target.value
-                                                    )
-                                                }
-                                                className="border rounded-md p-1"
-                                            >
-                                                <option value="customer">
-                                                    Customer
-                                                </option>
-                                                <option value="tasker">
-                                                    Tasker
-                                                </option>
-                                                <option value="admin">
-                                                    Admin
-                                                </option>
-                                            </select>
+                                            <div className="flex items-center gap-3">
+                                                <label className="inline-flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={(user.roles || []).includes('admin')}
+                                                        onChange={(e) => toggleRole(user.id, 'admin', e.target.checked)}
+                                                    />
+                                                    <span className="text-sm">Admin</span>
+                                                </label>
+                                                <label className="inline-flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={(user.roles || []).includes('tasker')}
+                                                        onChange={(e) => toggleRole(user.id, 'tasker', e.target.checked)}
+                                                    />
+                                                    <span className="text-sm">Tasker</span>
+                                                </label>
+                                            </div>
                                         </td>
                                         <td className="px-4 py-3">
                                             {user.rewardPoints ?? 0}
@@ -319,16 +313,7 @@ export default function AdminCustomersPage() {
                                                 >
                                                     Xóa
                                                 </button>
-                                                <button
-                                                    onClick={() =>
-                                                        alert(
-                                                            'Chức năng chỉnh sửa nhỏ — mở modal nếu cần'
-                                                        )
-                                                    }
-                                                    className="px-2 py-1 text-sm bg-gray-50 text-gray-700 border rounded"
-                                                >
-                                                    Sửa
-                                                </button>
+                                                <button onClick={() => setEditing(user)} className="px-2 py-1 text-sm bg-gray-50 text-gray-700 border rounded">Sửa</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -386,6 +371,67 @@ export default function AdminCustomersPage() {
                     </div>
                 )}
             </div>
+            {editing && (
+                <EditUserModal
+                    user={editing}
+                    onClose={() => setEditing(null)}
+                    onSaved={(u) => {
+                        setUsers(prev => prev.map(x => x.id === u.id ? u : x));
+                        setEditing(null);
+                    }}
+                />
+            )}
         </AdminLayout>
+    );
+}
+
+function EditUserModal({ user, onClose, onSaved }: { user: User; onClose: () => void; onSaved: (u: User) => void }) {
+    const [form, setForm] = useState<Partial<User>>({ name: user.name, email: user.email, phone: user.phone, gender: user.gender, dob: user.dob, address: user.address, avatar: user.avatar });
+    const [saving, setSaving] = useState(false);
+
+    const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setForm(prev => ({ ...prev, [name]: value }));
+    };
+
+    const save = async () => {
+        setSaving(true);
+        try {
+            const updated = await updateUserApi(user.id, {
+                name: form.name || '',
+                email: form.email || '',
+                phone: form.phone || '',
+                gender: form.gender || '',
+                dob: form.dob || '',
+                address: form.address || '',
+                avatar: form.avatar || '',
+            });
+            onSaved(updated);
+        } catch (e: any) {
+            alert(`Lưu thất bại: ${e?.message || e}`);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl w-full max-w-lg shadow-lg">
+                <div className="px-5 py-4 border-b font-semibold">Chỉnh sửa người dùng</div>
+                <div className="p-5 grid grid-cols-1 gap-3">
+                    <label className="text-sm text-gray-600">Họ tên<input name="name" value={form.name || ''} onChange={onChange} className="mt-1 w-full border rounded p-2" /></label>
+                    <label className="text-sm text-gray-600">Email<input name="email" value={form.email || ''} onChange={onChange} className="mt-1 w-full border rounded p-2" /></label>
+                    <label className="text-sm text-gray-600">SĐT<input name="phone" value={form.phone || ''} onChange={onChange} className="mt-1 w-full border rounded p-2" /></label>
+                    <label className="text-sm text-gray-600">Giới tính<input name="gender" value={form.gender || ''} onChange={onChange} className="mt-1 w-full border rounded p-2" placeholder="male/female/other hoặc Nam/Nữ/Khác" /></label>
+                    <label className="text-sm text-gray-600">Ngày sinh<input name="dob" type="date" value={(form.dob || '').slice(0,10)} onChange={onChange} className="mt-1 w-full border rounded p-2" /></label>
+                    <label className="text-sm text-gray-600">Địa chỉ<input name="address" value={form.address || ''} onChange={onChange} className="mt-1 w-full border rounded p-2" /></label>
+                    <label className="text-sm text-gray-600">Avatar URL<input name="avatar" value={form.avatar || ''} onChange={onChange} className="mt-1 w-full border rounded p-2" /></label>
+                </div>
+                <div className="px-5 py-4 border-t flex justify-end gap-2">
+                    <button onClick={onClose} className="px-4 py-2 border rounded">Hủy</button>
+                    <button onClick={save} disabled={saving} className="px-4 py-2 bg-teal-600 text-white rounded disabled:opacity-50">{saving ? 'Đang lưu...' : 'Lưu'}</button>
+                </div>
+            </div>
+        </div>
     );
 }

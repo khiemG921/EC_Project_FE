@@ -136,3 +136,25 @@ export async function setRoleUser(id: string, role: string): Promise<void> {
             `Không thể cập nhật vai trò người dùng: ${res.status} ${res.statusText}`
         );
 }
+
+// Thêm role (admin tasker)
+export async function grantRoleUser(id: string, role: 'admin' | 'tasker'): Promise<string[]> {
+    const res = await fetchWithAuth(`/api/admin/users/grantRole/${id}`, {
+        method: 'POST',
+        body: JSON.stringify({ role }),
+    });
+    if (!res.ok) throw new Error(`Không thể cấp quyền: ${res.status} ${res.statusText}`);
+    const data = await res.json();
+    return data.roles as string[];
+}
+
+// Thu hồi role (admin tasker)
+export async function revokeRoleUser(id: string, role: 'admin' | 'tasker'): Promise<string[]> {
+    const res = await fetchWithAuth(`/api/admin/users/revokeRole/${id}`, {
+        method: 'POST',
+        body: JSON.stringify({ role }),
+    });
+    if (!res.ok) throw new Error(`Không thể thu hồi quyền: ${res.status} ${res.statusText}`);
+    const data = await res.json();
+    return data.roles as string[];
+}

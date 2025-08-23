@@ -29,7 +29,16 @@ export function useUser() {
         const verified = await verifyToken().catch(() => null);
         if (mounted && verified && verified.user) {
           const roles = Array.isArray(verified.user.roles) ? verified.user.roles : [verified.user.roles || 'customer'];
-          setUser({ ...verified.user, roles });
+          const vuser = verified.user;
+          const normalized = {
+            ...vuser,
+            roles,
+            avatar: vuser.avatar,
+            dob: vuser.date_of_birth || vuser.dob || undefined,
+            gender: vuser.gender || undefined,
+            address: vuser.address || undefined,
+          };
+          setUser(normalized);
           setLoading(false);
           return;
         }
