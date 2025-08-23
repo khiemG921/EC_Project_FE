@@ -149,6 +149,10 @@ export default function AdminCustomersPage() {
 
     const toggleRole = async (id: string, role: 'admin' | 'tasker', enable: boolean) => {
         try {
+            if (role === 'admin' && enable) {
+                alert('Không được phép cấp quyền admin');
+                return;
+            }
             const roles = enable ? await grantRoleUser(id, role) : await revokeRoleUser(id, role);
             setUsers(prev => prev.map(u => u.id === id ? { ...u, roles } : u));
         } catch (err: unknown) {
@@ -287,6 +291,7 @@ export default function AdminCustomersPage() {
                                                         type="checkbox"
                                                         checked={(user.roles || []).includes('admin')}
                                                         onChange={(e) => toggleRole(user.id, 'admin', e.target.checked)}
+                                                        aria-label="Admin role"
                                                     />
                                                     <span className="text-sm">Admin</span>
                                                 </label>
