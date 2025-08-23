@@ -13,18 +13,17 @@ export async function POST(req: NextRequest) {
         method: 'GET',
         headers: {
           cookie: req.headers.get('cookie') || '',
-          authorization: req.headers.get('authorization') || '',
+          authorization: req.headers.get('authorization') || req.headers.get('Authorization') || '',
         },
         cache: 'no-store',
       });
-      if (!verifyResp.ok) {
-        return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
-      }
       const vr = await verifyResp.json().catch(() => ({}));
-      const roles: string[] = vr?.user?.roles || [];
-      if (!Array.isArray(roles) || !roles.includes('admin')) {
-        return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
-      }
+      const valid: boolean = !!(vr?.valid ?? verifyResp.ok);
+      const rolesArr: string[] = Array.isArray(vr?.user?.roles)
+        ? vr.user.roles
+        : (vr?.user?.role ? [vr.user.role] : []);
+      if (!valid) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+      if (!rolesArr.includes('admin')) return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
     } catch {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
     }

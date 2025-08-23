@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { getCrawlerStatus, updateCrawlerConfig, runCrawlerNow, getCsvDownloadUrl } from '@/lib/crawlerApi';
+import fetchWithAuth from '@/lib/apiClient';
 
 async function importLatest(maxTotal?: number) {
-    const r = await fetch('/api/proxy/news-import/import-latest', {
+    const r = await fetchWithAuth('/api/proxy/news-import/import-latest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ maxTotal }),
