@@ -15,9 +15,7 @@ async function getIdTokenMaybe(): Promise<string | undefined> {
 
 export async function fetchWithAuth(pathOrUrl: string, init: RequestInit = {}) {
   // Keep internal proxy on same-origin so Next API routes can inject secrets securely
-  const url = pathOrUrl.startsWith('/api/proxy/')
-    ? pathOrUrl
-    : (pathOrUrl.startsWith('/api') ? `${API_BASE_URL}${pathOrUrl}` : pathOrUrl);
+    const url = pathOrUrl.startsWith('/api') ? `${API_BASE_URL}${pathOrUrl}` : pathOrUrl;
 
   const headers = new Headers(init.headers || {});
   const token = await getIdTokenMaybe();

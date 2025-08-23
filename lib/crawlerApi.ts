@@ -1,5 +1,5 @@
 import fetchWithAuth from '@/lib/apiClient';
-const BASE = `/api/proxy/crawler`;
+const BASE = `${(globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || 'https://ecprojectbe-production.up.railway.app'}/api/crawler`;
 
 export async function getCrawlerStatus() {
   const r = await fetchWithAuth(`${BASE}/status`, { method: 'GET', cache: 'no-store' });

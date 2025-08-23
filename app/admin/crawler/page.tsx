@@ -2,11 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { getCrawlerStatus, updateCrawlerConfig, runCrawlerNow, getCsvDownloadUrl } from '@/lib/crawlerApi';
+import { getCrawlerStatus, updateCrawlerConfig, getCsvDownloadUrl } from '@/lib/crawlerApi';
 import fetchWithAuth from '@/lib/apiClient';
 
 async function importLatest(maxTotal?: number) {
-    const r = await fetchWithAuth('/api/proxy/news-import/import-latest', {
+    const r = await fetchWithAuth('/api/news-import/import-latest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ maxTotal }),
@@ -56,9 +56,16 @@ export default function CrawlerAdminPage() {
     const onRun = async () => {
         setRunning(true);
         try {
-            await runCrawlerNow();
-            await load();
-        } catch (e) { console.error(e); }
+                const r = await fetchWithAuth('/api/admin/trigger-github', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ owner: 'khiemG921', repo: 'EC_Project_BE', workflow_id: 'crawler.yml', ref: 'main' }),
+                    credentials: 'include'
+                });
+                const j = await r.json();
+                if (!j.success) throw new Error(j.message || JSON.stringify(j));
+                await load();
+            } catch (e) { console.error(e); }
         finally { setRunning(false); }
     };
 
