@@ -229,7 +229,7 @@ export async function saveSession(idToken: string) {
 }
 
 // Verify token và lấy thông tin user từ backend
-export async function verifyToken() {
+export async function verifyToken(passedIdToken?: string) {
   try {
     // Lấy Firebase token nếu user đã đăng nhập
     let headers: HeadersInit = {};
@@ -237,27 +237,60 @@ export async function verifyToken() {
     console.log('VerifyToken: Starting verification...');
     console.log('VerifyToken: auth.currentUser:', !!auth.currentUser);
 
-    if (auth.currentUser) {
-      try {
-        const token = await auth.currentUser.getIdToken();
-        headers['Authorization'] = `Bearer ${token}`;
-        console.log('VerifyToken: Got Firebase token, length:', token.length);
-      } catch (tokenError) {
-        console.log('VerifyToken: Could not get Firebase token:', tokenError);
-        // Tiếp tục mà không có token, có thể dựa vào cookie
+    const doRequest = async (tokenForHeader?: string) => {
+      const h: HeadersInit = { ...headers };
+      if (tokenForHeader) {
+        h['Authorization'] = `Bearer ${tokenForHeader}`;
       }
-    } else {
-      console.log('VerifyToken: No Firebase user logged in');
+      console.log('VerifyToken: Making request to backend...');
+      const resp = await fetch(`${API_BASE_URL}/api/auth/verify`, {
+        method: "GET",
+        headers: h,
+        credentials: "include",
+      });
+      console.log('VerifyToken: Response status:', resp.status);
+      return resp;
+    };
+
+    let tokenToUse = passedIdToken;
+
+    // Acquire token if not supplied
+    if (!tokenToUse) {
+      if (auth.currentUser) {
+        try {
+          const token = await auth.currentUser.getIdToken();
+          tokenToUse = token;
+          console.log('VerifyToken: Got Firebase token, length:', token.length);
+        } catch (tokenError) {
+          console.log('VerifyToken: Could not get Firebase token (will try force refresh):', tokenError);
+          // Try force refresh once
+          try {
+            const refreshed = await auth.currentUser.getIdToken(true);
+            tokenToUse = refreshed;
+            console.log('VerifyToken: Got refreshed Firebase token, length:', refreshed.length);
+          } catch (refreshErr) {
+            console.log('VerifyToken: Failed to force refresh token:', refreshErr);
+          }
+        }
+      } else {
+        console.log('VerifyToken: No Firebase user logged in');
+      }
     }
 
-    console.log('VerifyToken: Making request to backend...');
-    const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
-      method: "GET",
-      headers,
-      credentials: "include",
-    });
+    // First attempt
+    let response = await doRequest(tokenToUse);
 
-    console.log('VerifyToken: Response status:', response.status);
+    // If unauthorized and we have a firebase user, try to force refresh and retry once
+    if (response.status === 401 && auth.currentUser) {
+      try {
+        console.log('VerifyToken: 401 received, attempting token force refresh and retry...');
+        const refreshed = await auth.currentUser.getIdToken(true);
+        tokenToUse = refreshed;
+        response = await doRequest(tokenToUse);
+      } catch (retryErr) {
+        console.log('VerifyToken: Retry failed to get refreshed token:', retryErr);
+      }
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
