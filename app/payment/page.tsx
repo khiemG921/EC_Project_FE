@@ -7,6 +7,7 @@ import DashboardHeader from '@/components/common/DashboardHeader';
 import Swal from 'sweetalert2';
 import { getVoucherCodeFromStorage } from '@/lib/paymentUtils';
 import { logDev } from '@/lib/utils';
+import fetchWithAuth from '@/lib/apiClient';
 
 // Declare PayPal types for TypeScript
 declare global {
@@ -38,6 +39,7 @@ export default function PaymentPage() {
         useState<string>('');
     const [isPaypalReady, setIsPaypalReady] = useState(false);
     const paypalRenderedRef = useRef(false);
+    const paypalClientId = (globalThis as any)?.process?.env?.NEXT_PUBLIC_PAYPAL_CLIENT_ID as string | undefined;
 
     const { user, logoutUser, loading } = useUser();
     const router = useRouter();
@@ -86,9 +88,8 @@ export default function PaymentPage() {
             return;
         }
 
-        if (selectedPaymentMethod === 'paypal') {
             // 1) Lấy tỷ giá USD/VND
-            const exKey = process.env.NEXT_PUBLIC_EXCHANGE_RATE_API_KEY;
+            const exKey = (globalThis as any)?.process?.env?.NEXT_PUBLIC_EXCHANGE_RATE_API_KEY;
             const rateRes = await fetch(
                 `https://v6.exchangerate-api.com/v6/${exKey}/pair/USD/VND`
             );
@@ -108,14 +109,10 @@ export default function PaymentPage() {
                         },
                         createOrder: async () => {
                             try {
-                                const response = await fetch(
-                                    `${process.env.NEXT_PUBLIC_API_URL}/api/payment/paypal/create-order`,
+                                const response = await fetchWithAuth(
+                                    `/api/payment/paypal/create-order`,
                                     {
                                         method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                        },
-                                        credentials: 'include',
                                         body: JSON.stringify({
                                             amount: usdValue,
                                         }),
@@ -141,14 +138,10 @@ export default function PaymentPage() {
                         onApprove: async (data: any, actions: any) => {
                             try {
                                 // 1) Capture order qua PayPal
-                                const response = await fetch(
-                                    `${process.env.NEXT_PUBLIC_API_URL}/api/payment/paypal/capture-order`,
+                                const response = await fetchWithAuth(
+                                    `/api/payment/paypal/capture-order`,
                                     {
                                         method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                        },
-                                        credentials: 'include',
                                         body: JSON.stringify({
                                             orderID: data.orderID,
                                         }),
@@ -178,14 +171,10 @@ export default function PaymentPage() {
                                     orderData?.purchase_units?.[0]?.payments
                                         ?.authorizations?.[0];
 
-                                await fetch(
-                                    `${process.env.NEXT_PUBLIC_API_URL}/api/transaction/create`,
+                                await fetchWithAuth(
+                                    `/api/transaction/create`,
                                     {
                                         method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                        },
-                                        credentials: 'include',
                                         body: JSON.stringify({
                                             transactionId: transaction.id,
                                             jobId,
@@ -246,12 +235,10 @@ export default function PaymentPage() {
             return;
         } else if (selectedPaymentMethod === 'momo') {
             // 1) Tạo order Momo
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/payment/momo/create-order`,
+            const res = await fetchWithAuth(
+                `/api/payment/momo/create-order`,
                 {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
                     body: JSON.stringify({
                         amount: totalAmountVND,
                         orderInfo: `Thanh toán job #${jobId}`,
@@ -281,12 +268,10 @@ export default function PaymentPage() {
             return;
         } else if (selectedPaymentMethod === 'zalopay') {
             // 1) Tạo đơn ZaloPay
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/payment/zalo/create-order`,
+            const res = await fetchWithAuth(
+                `/api/payment/zalo/create-order`,
                 {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
                     body: JSON.stringify({
                         amount: totalAmountVND,
                         orderInfo: `Thanh toán job #${jobId}`,
@@ -321,13 +306,12 @@ export default function PaymentPage() {
 
     const handleGoBack = async () => {
         // 1) Gọi API hủy job nếu có jobId
-        if (jobId) {
+    if (jobId) {
             try {
-                const res = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/api/job/cancel/${jobId}`,
+    const res = await fetchWithAuth(
+            `/api/job/cancel/${jobId}`,
                     {
                         method: 'POST',
-                        credentials: 'include',
                     }
                 );
                 if (!res.ok) {
@@ -343,12 +327,10 @@ export default function PaymentPage() {
 
         // 2) Gọi API hoàn tiền CleanPay (refund) nếu đã sử dụng ví
         try {
-            await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/customer/refund`,
+            await fetchWithAuth(
+                `/api/customer/refund`,
                 {
                     method: 'POST',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ amount: totalAmountVND }),
                 }
             );
@@ -361,13 +343,12 @@ export default function PaymentPage() {
 
     const handleCancelPayment = async () => {
         // 1) Gọi API hủy job nếu có jobId
-        if (jobId) {
+    if (jobId) {
             try {
-                const res = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/api/job/cancel/${jobId}`,
+    const res = await fetchWithAuth(
+            `/api/job/cancel/${jobId}`,
                     {
                         method: 'POST',
-                        credentials: 'include',
                     }
                 );
                 if (!res.ok) {
@@ -383,12 +364,10 @@ export default function PaymentPage() {
 
         // 2) Gọi API hoàn tiền CleanPay (refund) nếu đã sử dụng ví
         try {
-            await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/customer/refund`,
+            await fetchWithAuth(
+                `/api/customer/refund`,
                 {
                     method: 'POST',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ amount: totalAmountVND }),
                 }
             );
@@ -413,11 +392,13 @@ export default function PaymentPage() {
     return (
         <>
             {/* PayPal SDK */}
-            <Script
-                src={`https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&currency=USD`}
-                strategy="afterInteractive" // ← load khi DOM đã interactive
-                onLoad={() => setIsPaypalReady(true)} // ← SDK đã sẵn sàng
-            />
+            {paypalClientId ? (
+                <Script
+                    src={`https://www.paypal.com/sdk/js?client-id=${paypalClientId}&currency=USD`}
+                    strategy="afterInteractive"
+                    onLoad={() => setIsPaypalReady(true)}
+                />
+            ) : null}
 
             <div className="flex min-h-screen bg-slate-50">
                 <main className="flex-1 p-8">

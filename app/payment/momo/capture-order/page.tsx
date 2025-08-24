@@ -34,7 +34,7 @@ function MomoCaptureOrderContent() {
         }
 
         // 3) Gọi API tạo transaction
-        fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/transaction/create`, {
+        fetchWithAuth(`/api/transaction/create`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
