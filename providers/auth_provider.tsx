@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           // Verify token và lấy thông tin user từ backend
-          const userData = await verifyToken(idToken);
+          const userData = await verifyToken();
           // console.log('User data from backend:', userData);
           
           if (userData && userData.user) {
@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               
               if (syncResponse.ok) {
                 console.log('User synced successfully, retrying verification...');
-                const retryUserData = await verifyToken(idToken);
+                const retryUserData = await verifyToken();
                 if (retryUserData && retryUserData.user) {
                   setUser(retryUserData.user);
                 } else {

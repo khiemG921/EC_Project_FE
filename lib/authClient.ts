@@ -257,10 +257,8 @@ export async function saveSession(idToken: string) {
     throw new Error(errorText || "Failed to save session");
   }
   
-  const result = await response.json();
-  logDev('Session saved successfully:', result);
-
   const result = await response.json().catch(() => ({}));
+  logDev('Session saved successfully:', result);
   console.log('Session saved successfully:', result);
   return result;
 }
