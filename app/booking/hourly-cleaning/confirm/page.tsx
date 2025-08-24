@@ -297,12 +297,10 @@ const ConfirmationPage = () => {
     const handleConfirm = async () => {
         // 1) Tạo Job trên backend
         try {
-            const res = await fetch(
+            const res = await fetchWithAuth(
                 `${process.env.NEXT_PUBLIC_API_URL}/api/job/create`,
                 {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
                     body: JSON.stringify({
                         serviceId: serviceInfo.id,
                         serviceDetailId:

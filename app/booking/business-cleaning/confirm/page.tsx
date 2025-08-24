@@ -1,6 +1,6 @@
 // app/booking/business-cleaning/confirm/page.tsx
 'use client';
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect } from 'react';
 import BookingLayout from '../../../../components/booking/BookingLayout';
 import { useRouter } from 'next/navigation';
 import {
@@ -25,6 +25,7 @@ const ConfirmStep = () => {
     const [walletBalance, setWalletBalance] = useState(0);
     const [useWallet, setUseWallet] = useState(false);
 
+    // Khôi phục dữ liệu từ localStorage
     useEffect(() => {
         const savedBookingData = localStorage.getItem('businessBookingData');
         if (savedBookingData) {
@@ -64,6 +65,7 @@ const ConfirmStep = () => {
         };
     }, []);
 
+    // Load danh sách voucher
     useEffect(() => {
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vouchers`, {
             credentials: 'include',
@@ -80,6 +82,7 @@ const ConfirmStep = () => {
             .catch((err) => console.error('Failed to load vouchers:', err));
     }, []);
 
+    // Xử lý promo code trên URL hoặc localStorage
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const promoFromQuery = params.get('promo');
@@ -104,12 +107,14 @@ const ConfirmStep = () => {
         }
     }, [isDataRestored]);
 
+    // Đồng bộ hiển thị promoCode
     useEffect(() => {
         if (bookingData.promoCode) {
             setPromoCode(bookingData.promoCode);
         }
     }, [bookingData.promoCode]);
 
+    // Gọi API checkout khi dữ liệu thay đổi
     useEffect(() => {
         if (!bookingData.area || !bookingData.selectedServices?.length) {
             return;
@@ -159,22 +164,21 @@ const ConfirmStep = () => {
 
     const handleConfirm = async () => {
         try {
-            const res = await fetch(
+            const res = await fetchWithAuth(
                 `${process.env.NEXT_PUBLIC_API_URL}/api/job/create`,
                 {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
                     body: JSON.stringify({
                         serviceId: serviceInfo.id,
-                        serviceDetailId:
-                            bookingData.selectedServices?.join(','),
+                        serviceDetailId: bookingData.selectedServices?.join(','),
                         location: bookingData.address,
                         description:
-                            '(' +
+                            '('
+                            +
                             checkoutResult?.breakdown
                                 ?.map((item: any) => `${item.name}`)
-                                .join(', ') +
+                                .join(', ')
+                            +
                             `) x ${bookingData.area} m2 x ${bookingData.sessionsPerWeek} buổi/tuần x ${bookingData.packageDuration} tháng`,
                     }),
                 }
@@ -193,12 +197,10 @@ const ConfirmStep = () => {
 
             // Trừ CleanPay (reward_points) nếu khách dùng ví
             if (useWallet && walletDeduction > 0) {
-                await fetch(
+                await fetchWithAuth(
                     `${process.env.NEXT_PUBLIC_API_URL}/api/customer/substract-cleanpay`,
                     {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
                         body: JSON.stringify({ amount: walletDeduction }),
                     }
                 );
