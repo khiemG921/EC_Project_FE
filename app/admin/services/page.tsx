@@ -5,6 +5,7 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { auth } from '@/lib/firebase';
+import { logDev } from '@/lib/utils';
 
 interface Service {
     id: string | number;
@@ -62,7 +63,7 @@ export default function AdminServicesPage() {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/services/admin`);
             if (response.ok) {
                 const data = await response.json();
-                console.log('API Response:', data); // Debug log
+                logDev('API Response:', data); // Debug log
                 setServices(data.data || []);
             } else {
                 console.error('Failed to fetch services');
@@ -124,7 +125,7 @@ export default function AdminServicesPage() {
         const token = user ? await user.getIdToken() : null;
 
         const url = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/services/${serviceId}`;
-        console.log('Gọi API xóa dịch vụ:', url);
+        logDev('Gọi API xóa dịch vụ:', url);
 
         try {
             const response = await fetch(url, {

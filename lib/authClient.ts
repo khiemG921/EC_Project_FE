@@ -11,6 +11,7 @@ import {
 import { auth } from "./firebase";
 import fetchWithAuth from '@/lib/apiClient';
 import { clearAuthTokens } from './authUtils';
+import { logDev } from '@/lib/utils';
 
 const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '';
 
@@ -32,7 +33,7 @@ export async function registerUser(email: unknown, password: unknown, name?: str
   const nameStr = name ? String(name).trim() : '';
   const phoneStr = phone ? String(phone).trim() : '';
   
-  console.log('Starting registration for:', emailStr);
+  logDev('Starting registration for:', emailStr);
   
   try {
     // Gọi backend để đăng ký - backend sẽ tạo Firebase user và gửi OTP
@@ -54,7 +55,7 @@ export async function registerUser(email: unknown, password: unknown, name?: str
     }
     
     const result = await response.json();
-    console.log('Registration response:', result);
+    logDev('Registration response:', result);
     return result;
     
   } catch (error) {
@@ -68,19 +69,19 @@ export async function loginUser(email: unknown, password: unknown) {
   const emailStr = String(email).trim();
   const passwordStr = String(password).trim();
   
-  console.log('Login attempt for:', emailStr);
+  logDev('Login attempt for:', emailStr);
   
   try {
     // Đăng nhập Firebase
     const result = await signInWithEmailAndPassword(auth, emailStr, passwordStr);
-    console.log('Firebase login successful:', result.user.uid);
+    logDev('Firebase login successful:', result.user.uid);
     
     const idToken = await result.user.getIdToken();
-    console.log('Got Firebase token:', idToken.substring(0, 20) + '...');
+    logDev('Got Firebase token:', idToken.substring(0, 20) + '...');
     
     // Lưu session vào backend
   await saveSession(idToken);
-    console.log('Session saved successfully');
+    logDev('Session saved successfully');
     
     return idToken;
   } catch (error) {
@@ -206,7 +207,7 @@ export async function forceLogout() {
 
 // Lưu session vào backend
 export async function saveSession(idToken: string) {
-  console.log('Saving session with token:', idToken.substring(0, 20) + '...');
+  logDev('Saving session with token:', idToken.substring(0, 20) + '...');
   
     const response = await fetch('/api/auth/session', {
       method: 'POST',
@@ -215,7 +216,7 @@ export async function saveSession(idToken: string) {
       credentials: 'include',
     });
   
-  console.log('Save session response status:', response.status);
+  logDev('Save session response status:', response.status);
   
   if (!response.ok) {
     const errorText = await response.text();
@@ -224,7 +225,7 @@ export async function saveSession(idToken: string) {
   }
   
   const result = await response.json();
-  console.log('Session saved successfully:', result);
+  logDev('Session saved successfully:', result);
   return result;
 }
 
@@ -234,34 +235,34 @@ export async function verifyToken() {
     // Lấy Firebase token nếu user đã đăng nhập
     let headers: HeadersInit = {};
 
-    console.log('VerifyToken: Starting verification...');
-    console.log('VerifyToken: auth.currentUser:', !!auth.currentUser);
+    logDev('VerifyToken: Starting verification...');
+    logDev('VerifyToken: auth.currentUser:', !!auth.currentUser);
 
     if (auth.currentUser) {
       try {
         const token = await auth.currentUser.getIdToken();
         headers['Authorization'] = `Bearer ${token}`;
-        console.log('VerifyToken: Got Firebase token, length:', token.length);
+        logDev('VerifyToken: Got Firebase token, length:', token.length);
       } catch (tokenError) {
-        console.log('VerifyToken: Could not get Firebase token:', tokenError);
+        logDev('VerifyToken: Could not get Firebase token:', tokenError);
         // Tiếp tục mà không có token, có thể dựa vào cookie
       }
     } else {
-      console.log('VerifyToken: No Firebase user logged in');
+      logDev('VerifyToken: No Firebase user logged in');
     }
 
-    console.log('VerifyToken: Making request to backend...');
+    logDev('VerifyToken: Making request to backend...');
     const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
       method: "GET",
       headers,
       credentials: "include",
     });
 
-    console.log('VerifyToken: Response status:', response.status);
+    logDev('VerifyToken: Response status:', response.status);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.log('VerifyToken: Error response:', errorData);
+      logDev('VerifyToken: Error response:', errorData);
       if (response.status === 401) {
         throw new Error(errorData.error || "No authentication token");
       }
@@ -269,7 +270,7 @@ export async function verifyToken() {
     }
 
     const result = await response.json();
-    console.log('VerifyToken: Success, got user:', !!result.user);
+    logDev('VerifyToken: Success, got user:', !!result.user);
     return result;
   } catch (networkError) {
     // Handle network errors gracefully
@@ -300,9 +301,9 @@ export async function getDashboardData() {
 // Sync user với database
 export async function syncUserToDatabase(firebaseUser: User) {
   try {
-    console.log('Syncing user to database:', firebaseUser.uid);
+    logDev('Syncing user to database:', firebaseUser.uid);
     const token = await firebaseUser.getIdToken();
-    console.log('Got Firebase token for sync');
+    logDev('Got Firebase token for sync');
     
   const response = await fetchWithAuth('/api/auth/sync-user', {
       method: "POST",
@@ -318,7 +319,7 @@ export async function syncUserToDatabase(firebaseUser: User) {
       }),
     });
     
-    console.log('Sync response status:', response.status);
+    logDev('Sync response status:', response.status);
     
     if (!response.ok) {
       const errorData = await response.json();
@@ -330,7 +331,7 @@ export async function syncUserToDatabase(firebaseUser: User) {
     }
     
     const data = await response.json();
-    console.log('User sync successful:', {
+    logDev('User sync successful:', {
       hasUser: !!data.user,
       userId: data.user?.id,
       userName: data.user?.name

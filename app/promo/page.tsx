@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import BookingLayout from '../../components/booking/BookingLayout';
 import { useRouter } from 'next/navigation';
+import { logDev } from '@/lib/utils';
 
 // voucher interface
 interface Voucher {
@@ -23,7 +24,7 @@ const VoucherPage = () => {
     useEffect(() => {
         const fetchVouchers = async () => {
             try {
-                console.log('Fetching vouchers from API...');
+                logDev('Fetching vouchers from API...');
                 const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vouchers`, {
                     credentials: 'include',
                     headers: {
@@ -31,7 +32,7 @@ const VoucherPage = () => {
                     }
                 });
                 
-                console.log('API response status:', res.status);
+                logDev('API response status:', res.status);
                 
                 if (!res.ok) {
                     console.error('API response not ok:', res.status, res.statusText);
@@ -39,7 +40,7 @@ const VoucherPage = () => {
                 }
                 
                 const data = await res.json();
-                console.log('Vouchers received:', data);
+                logDev('Vouchers received:', data);
                 
                 // Handle different response formats
                 const vouchers = Array.isArray(data) ? data : 
@@ -82,12 +83,12 @@ const VoucherPage = () => {
 
             // Dùng returnUrl để điều hướng
             if (returnUrl) {
-                console.log('Quay lại URL:', returnUrl);
+                logDev('Quay lại URL:', returnUrl);
                 router.push(`${returnUrl}?promo=${selectedVoucherCode}`);
             }
             // Nếu không có returnUrl, kiểm tra service
             else if (service) {
-                console.log('Không có returnUrl:', service);
+                logDev('Không có returnUrl:', service);
                 const returnStep = params.get('returnStep') || '3';
 
                 // Mapping service name to URL
@@ -109,7 +110,7 @@ const VoucherPage = () => {
             }
             // Nếu không có returnUrl và không có service, quay lại trang trước
             else {
-                console.log('Không có thông tin returnUrl và service, quay lại trang trước');
+                logDev('Không có thông tin returnUrl và service, quay lại trang trước');
                 router.back();
             }
         }

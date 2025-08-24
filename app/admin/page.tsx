@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { cn } from "@/lib/utils";
+import { cn, logDev } from "@/lib/utils";
 import { fetchCountUsers, fetchCountServices, fetchCountJobs } from '@/lib/admin/dashboard'
 import { Button } from "@/components/ui/button";
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -137,7 +137,7 @@ const AdminDashboardPage: React.FC = () => {
         const fetchData = setTimeout(() => {
             // setStats(fetchedStats);
             // setRecentActivities(fetchedActivities);
-            console.log("Dashboard data loaded.");
+            logDev("Dashboard data loaded.");
         }, 500); // Giả lập tải 0.5 giây
 
         return () => clearTimeout(fetchData);
@@ -150,9 +150,9 @@ const AdminDashboardPage: React.FC = () => {
                 const serviceStats = await fetchCountServices();
                 const jobStats = await fetchCountJobs();
 
-                console.log("User Stats:", userStats);
-                console.log("Service Stats:", serviceStats);
-                console.log("Job Stats:", jobStats);
+                logDev("User Stats:", userStats);
+                logDev("Service Stats:", serviceStats);
+                logDev("Job Stats:", jobStats);
 
                 setStats(prev => ({
                     ...prev,

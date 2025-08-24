@@ -1,6 +1,7 @@
 // components/booking/BookingLayout.tsx
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
+import { logDev } from '@/lib/utils';
 
 // --- Các Pop-up dùng chung ---
 // AddressModal có"Địa chỉ đã lưu"
@@ -179,14 +180,14 @@ export const AddressModal = ({
                 ? { lat, lng }
                 : mapInstanceRef.current.getCenter();
         try {
-            console.log('Selected coordinates:', coords);
+            logDev('Selected coordinates:', coords);
             const res = await fetch(`/api/location/reverse`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ lat: coords.lat, lng: coords.lng }),
             });
             const data = await res.json();
-            console.log('Reverse geocoding result:', data);
+            logDev('Reverse geocoding result:', data);
             setFullAddress(data.address);
             setCity(data.city);
             setDistrict(data.district);

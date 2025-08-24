@@ -5,6 +5,7 @@ import BookingLayout from '../../../../components/booking/BookingLayout';
 import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import { Wallet } from 'lucide-react';
+import { logDev } from '@/lib/utils';
 
 const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || 'https://ecprojectbe-production.up.railway.app';
 
@@ -477,6 +478,20 @@ export default function ACConfirmStep() {
                     }),
                 }
             );
+
+            logDev('Create job response:', res);
+            if (res.status !== 201) {
+                const errorData = await res.json();
+                console.error('Failed to create job:', errorData);
+                Swal.fire({
+                    text: 'Không thể tạo công việc, vui lòng thử lại.',
+                    icon: 'warning',
+                    confirmButtonColor: '#14b8a6',
+                    confirmButtonText: 'Đóng',
+                    title: '',
+                });
+                return;
+            }
 
             // 2) Chuyển sang trang payment
             const job = await res.json();

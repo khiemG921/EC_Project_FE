@@ -33,7 +33,6 @@ const ConfirmStep = () => {
                     parsed.workDate = new Date(parsed.workDate);
                 }
                 setBookingData(parsed);
-                console.log('Booking data restored:', parsed);
             } catch (error) {
                 console.error('Error parsing saved booking data:', error);
             }

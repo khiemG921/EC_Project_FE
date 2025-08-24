@@ -5,6 +5,7 @@ import BookingLayout from '../../../../components/booking/BookingLayout';
 import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Wallet } from 'lucide-react';
+import { logDev } from '@/lib/utils';
 import Swal from 'sweetalert2';
 
 // --- DỮ LIỆU DỊCH VỤ ---
@@ -121,12 +122,10 @@ const ConfirmationPage = () => {
         if (savedBookingData) {
             try {
                 const parsed = JSON.parse(savedBookingData);
-                console.log('Khôi phục dữ liệu từ localStorage:', parsed);
                 if (parsed.workDate) {
                     parsed.workDate = new Date(parsed.workDate);
                 }
                 setBookingData(parsed);
-                console.log('Booking data restored:', bookingData);
             } catch (error) {
                 console.error('Error parsing saved booking data:', error);
             }
@@ -141,17 +140,13 @@ const ConfirmationPage = () => {
         const savedPromoCode = localStorage.getItem('selectedPromoCode');
 
         if (promoFromQuery) {
-            console.log('Get voucher from URL:', promoFromQuery);
+            logDev('Get voucher from URL:', promoFromQuery);
             localStorage.setItem('selectedPromoCode', promoFromQuery);
             setPromoCode(promoFromQuery);
 
             // Chờ cho booking data được restore xong
             if (isDataRestored) {
                 setBookingData((prev) => {
-                    console.log(
-                        'Updating booking data with promo:',
-                        promoFromQuery
-                    );
                     return { ...prev, promoCode: promoFromQuery };
                 });
 
@@ -159,7 +154,6 @@ const ConfirmationPage = () => {
                 window.history.replaceState({}, '', window.location.pathname);
             }
         } else if (savedPromoCode && isDataRestored) {
-            console.log('Update voucher localStorage:', savedPromoCode);
             setPromoCode(savedPromoCode);
             setBookingData((prev) => ({ ...prev, promoCode: savedPromoCode }));
         }
@@ -168,7 +162,6 @@ const ConfirmationPage = () => {
     // Đồng bộ hóa promoCode với bookingData
     useEffect(() => {
         if (bookingData.promoCode) {
-            console.log('🔄 Sync promoCode display:', bookingData.promoCode);
             setPromoCode(bookingData.promoCode);
         }
     }, [bookingData.promoCode]);
@@ -193,8 +186,6 @@ const ConfirmationPage = () => {
                         voucher_code: bookingData.promoCode || null,
                     };
 
-                    console.log('Checkout payload:', payload);
-
                     const res = await fetch(
                         `${process.env.NEXT_PUBLIC_API_URL}/api/booking/hourly/checkout`,
                         {
@@ -204,7 +195,6 @@ const ConfirmationPage = () => {
                         }
                     );
                     const data = await res.json();
-                    console.log('Checkout result:', data);
                     setCheckoutResult(data);
                 } catch (error) {
                     console.error('Error fetching checkout data:', error);
@@ -342,7 +332,6 @@ const ConfirmationPage = () => {
             if (!res.ok) {
                 throw new Error(`HTTP ${res.status}`);
             }
-            console.log('Create job response:', res);
 
             // 2) Chuyển sang trang payment
             const job = await res.json();

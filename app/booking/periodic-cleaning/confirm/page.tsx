@@ -12,6 +12,7 @@ import {
     getExtraServicesWithPrices,
     getScheduleSummary,
 } from '../bookingConfig';
+import { logDev } from '@/lib/utils';
 
 const ConfirmStep = () => {
     const router = useRouter();
@@ -32,7 +33,7 @@ const ConfirmStep = () => {
         if (savedBookingData) {
             try {
                 const parsed = JSON.parse(savedBookingData);
-                console.log('Khôi phục dữ liệu từ localStorage:', parsed);
+                logDev('Khôi phục dữ liệu từ localStorage:', parsed);
                 if (parsed.workDate) {
                     parsed.workDate = new Date(parsed.workDate);
                 }
@@ -97,7 +98,7 @@ const ConfirmStep = () => {
             // Chờ cho booking data được restore xong
             if (isDataRestored) {
                 setBookingData((prev: any) => {
-                    console.log(
+                    logDev(
                         'Updating booking data with promo:',
                         promoFromQuery
                     );
@@ -108,7 +109,7 @@ const ConfirmStep = () => {
                 window.history.replaceState({}, '', window.location.pathname);
             }
         } else if (savedPromoCode && isDataRestored) {
-            console.log('Update voucher localStorage:', savedPromoCode);
+            logDev('Update voucher localStorage:', savedPromoCode);
             setPromoCode(savedPromoCode);
             setBookingData((prev: any) => ({
                 ...prev,
@@ -120,7 +121,7 @@ const ConfirmStep = () => {
     // Đồng bộ hóa promoCode với bookingData
     useEffect(() => {
         if (bookingData.promoCode) {
-            console.log('🔄 Sync promoCode display:', bookingData.promoCode);
+            logDev('🔄 Sync promoCode display:', bookingData.promoCode);
             setPromoCode(bookingData.promoCode);
         }
     }, [bookingData.promoCode]);

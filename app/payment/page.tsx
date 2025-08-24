@@ -6,6 +6,7 @@ import { useUser } from '@/hooks/useUser';
 import DashboardHeader from '@/components/common/DashboardHeader';
 import Swal from 'sweetalert2';
 import { getVoucherCodeFromStorage } from '@/lib/paymentUtils';
+import { logDev } from '@/lib/utils';
 
 // Declare PayPal types for TypeScript
 declare global {
@@ -49,7 +50,7 @@ export default function PaymentPage() {
     }, [loading, user, router]);
 
     useEffect(() => {
-        console.log('Payment page loaded.');
+        logDev('Payment page loaded.');
     }, []);
 
     useEffect(() => {
@@ -153,7 +154,7 @@ export default function PaymentPage() {
                                         }),
                                     }
                                 );
-                                console.log('Order data:', response);
+                                logDev('Order data:', response);
                                 const orderData = await response.json();
 
                                 // 2) Xử lý các trường hợp lỗi

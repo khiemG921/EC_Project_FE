@@ -18,6 +18,7 @@ import { Header } from '@/components/Header'; // <--- thay đường dẫn này 
 import Footer from '@/components/Footer';
 import { logoutUser } from '@/lib/authClient';
 import { useRouter } from 'next/navigation';
+import { logDev } from '@/lib/utils';
 
 const mockUser = {
     name: 'Nguyễn Văn A',
@@ -54,7 +55,7 @@ const SettingsPage = () => {
     const handleEditProfile = () => {
         // Logic để lưu thông tin đã chỉnh sửa
         setIsEditingProfile(false);
-        console.log('Thông tin hồ sơ đã được lưu:', user);
+        logDev('Thông tin hồ sơ đã được lưu:', user);
     };
 
     const handleLogout = async () => {

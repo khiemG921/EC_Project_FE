@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { loginUser, loginWithGoogle, getDashboardData, verifyToken } from "@/lib/authClient";
+import { logDev } from '@/lib/utils';
 
 const slides = [
     "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=2070&auto=format&fit=crop",
@@ -25,10 +26,10 @@ const LoginPage = () => {
         setError("");
 
         try {
-            console.log('Starting login process...');
+            logDev('Starting login process...');
             // Đăng nhập qua Firebase
             const token = await loginUser(email, password);
-            console.log('Login successful, verifying backend session...');
+            logDev('Login successful, verifying backend session...');
             // rely on Firebase auth state
             // Ensure backend session is set and valid before navigating (prevents middleware redirect)
             try {
@@ -48,7 +49,7 @@ const LoginPage = () => {
                 };
 
                 const verifyResult = await waitForVerify();
-                console.log('Backend verify result:', verifyResult);
+                logDev('Backend verify result:', verifyResult);
                 router.push('/dashboard');
             } catch (verifyErr) {
                 console.error('Backend verification failed after login:', verifyErr);

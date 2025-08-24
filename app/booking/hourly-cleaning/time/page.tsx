@@ -6,6 +6,7 @@ import BookingLayout, {
     TimePickerModal,
 } from '../../../../components/booking/BookingLayout';
 import { useRouter } from 'next/navigation';
+import { logDev } from '@/lib/utils';
 
 // --- DỮ LIỆU DỊCH VỤ ---
 const allPricingOptions = [
@@ -127,7 +128,6 @@ const TimeSelectionPage = () => {
             if (savedBookingData) {
                 try {
                     const parsed = JSON.parse(savedBookingData);
-                    console.log('Khôi phục dữ liệu từ localStorage:', parsed);
                     if (parsed.workDate) {
                         parsed.workDate = new Date(parsed.workDate);
                     }
@@ -136,7 +136,7 @@ const TimeSelectionPage = () => {
                     // Đợi một chút để đảm bảo setState xong
                     setTimeout(
                         () => {
-                            console.log('Data restored, setting flag');
+                            logDev('Data restored, setting flag');
                             setIsDataRestored(true);
                         },
                         fromService ? 200 : 50
@@ -146,10 +146,10 @@ const TimeSelectionPage = () => {
                     setIsDataRestored(false);
                 }
             } else {
-                console.log('No saved data found');
+                logDev('No saved data found');
                 // Nếu không có data và không phải từ service page thì có thể redirect
                 if (!fromService) {
-                    console.log(
+                    logDev(
                         'No data and not from service, should redirect'
                     );
                 }
@@ -164,7 +164,7 @@ const TimeSelectionPage = () => {
     // Validation logic - chỉ chạy sau khi đã restore
     useEffect(() => {
         if (!isDataRestored || typeof window === 'undefined') {
-            console.log(
+            logDev(
                 'Data not restored yet or server-side, skipping validation'
             );
             return;
@@ -172,7 +172,7 @@ const TimeSelectionPage = () => {
 
         // Wait for one render cycle to ensure state is fully updated
         const timeout = setTimeout(() => {
-            console.log('Validation running. Current data:', {
+            logDev('Validation running. Current data:', {
                 address: bookingData.address,
                 durationId: bookingData.durationId,
                 isDataRestored,
@@ -181,15 +181,15 @@ const TimeSelectionPage = () => {
 
             // Chỉ chạy validation nếu không phải từ service page
             if (fromServicePage) {
-                console.log('Skipping validation - coming from service page');
+                logDev('Skipping validation - coming from service page');
                 return;
             }
 
             if (!bookingData.address || !bookingData.durationId) {
-                console.log('Missing basic info, redirecting to service step');
+                logDev('Missing basic info, redirecting to service step');
                 router.replace('/booking/hourly-cleaning/service');
             } else {
-                console.log('Validation passed, staying on time page');
+                logDev('Validation passed, staying on time page');
             }
         }, 100);
 
@@ -258,7 +258,7 @@ const TimeSelectionPage = () => {
                         laundry: bookingData.selectedOptionIds.includes(6),
                     };
 
-                    console.log('Checkout payload:', payload);
+                    logDev('Checkout payload:', payload);
 
                     const res = await fetch(
                         `${process.env.NEXT_PUBLIC_API_URL}/api/booking/hourly/checkout`,
@@ -269,7 +269,7 @@ const TimeSelectionPage = () => {
                         }
                     );
                     const data = await res.json();
-                    console.log('Checkout result:', data);
+                    logDev('Checkout result:', data);
                     setCheckoutResult(data);
                 } catch (error) {
                     console.error('Error fetching checkout data:', error);

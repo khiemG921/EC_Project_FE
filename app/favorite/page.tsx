@@ -9,6 +9,7 @@ import EmptyState from '@/components/common/EmptyState';
 import { useUser } from '@/hooks/useUser';
 import { useFavoriteServices } from '@/hooks/useFavoriteServices';
 import fetchWithAuth from '@/lib/apiClient';
+import { logDev } from '@/lib/utils';
 
 const FavoritesPage = () => {
     const { user, logoutUser, loading: authLoading } = useUser();
@@ -39,7 +40,7 @@ const FavoritesPage = () => {
                 const res = await fetchWithAuth('/api/favorite/details', { method: 'GET' });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const favServices = await res.json();
-                console.log('Fetched favorite services:', favServices);
+                logDev('Fetched favorite services:', favServices);
                 setServices(favServices || []);
             } catch (error) {
                 console.error('Error fetching favorite services:', error);
@@ -124,7 +125,7 @@ const FavoritesPage = () => {
                     ) : services.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {services.map((service, index) => {
-                                console.log('Rendering service:', service);
+                                logDev('Rendering service:', service);
                                 const uniqueKey = service.service_id ;
                                 return (
                                     <FavoriteServiceCard 

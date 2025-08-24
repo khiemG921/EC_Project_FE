@@ -21,6 +21,7 @@ import {
 import DashboardHeader from '@/components/common/DashboardHeader';
 import { useUser } from '@/hooks/useUser';
 import { Button } from '@/components/ui/button';
+import { logDev } from '@/lib/utils';
 
 const createdJobs: any[] = [];
 
@@ -609,7 +610,7 @@ const BookingHistoryPage = () => {
     };
 
     const handleConfirmCancellation = (jobId: number, reason: string) => {
-        console.log(`Đã xác nhận hủy job ID: ${jobId} với lý do: "${reason}"`);
+        logDev(`Đã xác nhận hủy job ID: ${jobId} với lý do: "${reason}"`);
         
         setJobs((prevJobs) =>
             prevJobs.map((job) =>

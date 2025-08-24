@@ -5,6 +5,7 @@ import { verifyToken, logoutUser } from '../lib/authClient';
 import fetchWithAuth from '@/lib/apiClient';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import { logDev } from '@/lib/utils';
 
 type AuthContextType = {
   user: User | null;
@@ -42,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!mounted) return; // Chỉ chạy khi đã mounted trên client
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log('Firebase auth state changed:', firebaseUser ? 'logged in' : 'logged out');
+      logDev('Firebase auth state changed:', firebaseUser ? 'logged in' : 'logged out');
       
       // Check if we're on auth pages (login/register) to avoid unnecessary token verification
       const isAuthPage = typeof window !== 'undefined' && 
@@ -55,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Đảm bảo Firebase user đã được authenticate hoàn toàn
           const idToken = await firebaseUser.getIdToken(false);
           if (!idToken) {
-            console.log('No valid ID token available');
+            logDev('No valid ID token available');
             setUser(null);
             setLoading(false);
             return;
@@ -63,28 +64,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           // Verify token và lấy thông tin user từ backend
           const userData = await verifyToken();
-          // console.log('User data from backend:', userData);
+          // logDev('User data from backend:', userData);
           
           if (userData && userData.user) {
             setUser(userData.user);
           } else {
-            console.log('No user data from backend, attempting to sync...');
+            logDev('No user data from backend, attempting to sync...');
             
             // Thử sync user từ Firebase sang database
             try {
               const syncResponse = await fetchWithAuth('/api/auth/sync-user', { method: 'POST' });
               
               if (syncResponse.ok) {
-                console.log('User synced successfully, retrying verification...');
+                logDev('User synced successfully, retrying verification...');
                 const retryUserData = await verifyToken();
                 if (retryUserData && retryUserData.user) {
                   setUser(retryUserData.user);
                 } else {
-                  console.log('Still no user data after sync, clearing auth');
+                  logDev('Still no user data after sync, clearing auth');
                   clearInvalidAuth();
                 }
               } else {
-                console.log('Sync failed, clearing invalid auth');
+                logDev('Sync failed, clearing invalid auth');
                 clearInvalidAuth();
               }
             } catch (syncError) {
@@ -94,27 +95,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } catch (error) {
           // Chỉ log error, không throw để tránh crash UI
-          console.log('Auth verification issue:', error instanceof Error ? error.message : 'Unknown error');
+          logDev('Auth verification issue:', error instanceof Error ? error.message : 'Unknown error');
           
           // Xử lý các loại lỗi khác nhau
           if (error instanceof Error) {
             if (error.message.includes('No token') || error.message.includes('No authentication')) {
-              console.log('User not authenticated - normal for registration/login pages');
+              logDev('User not authenticated - normal for registration/login pages');
               setUser(null);
             } else if (error.message === 'Failed to verify token') {
-              console.log('Token verification failed - clearing invalid auth');
+              logDev('Token verification failed - clearing invalid auth');
               clearInvalidAuth();
             } else {
-              console.log('Other authentication error:', error.message);
+              logDev('Other authentication error:', error.message);
               setUser(null);
             }
           } else {
-            console.log('Unknown authentication error');
+            logDev('Unknown authentication error');
             setUser(null);
           }
         }
       } else {
-        console.log('No firebase user, clearing auth');
+        logDev('No firebase user, clearing auth');
         clearInvalidAuth();
       }
       setLoading(false);

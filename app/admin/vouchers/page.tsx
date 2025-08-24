@@ -5,6 +5,7 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { logDev } from '@/lib/utils';
 
 // Types - Simplified without max_uses/current_uses
 interface Voucher {
@@ -55,17 +56,17 @@ const VoucherManagementPage = () => {
       });
 
       const url = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/vouchers?${params}`;
-      console.log('🔍 Fetching vouchers from:', url);
+      logDev('🔍 Fetching vouchers from:', url);
 
       const response = await fetch(url, {
         credentials: 'include' // Dùng cookie session
       });
 
-      console.log('📡 Response status:', response.status);
+      logDev('📡 Response status:', response.status);
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Vouchers data received:', data);
+        logDev('✅ Vouchers data received:', data);
         setVouchers(data.data || []);
       } else {
         const errorText = await response.text();
@@ -81,7 +82,7 @@ const VoucherManagementPage = () => {
   const fetchStats = async () => {
     try {
       const url = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/vouchers/stats`;
-      console.log('🔍 Fetching stats from:', url);
+      logDev('🔍 Fetching stats from:', url);
 
       const response = await fetch(url, {
         credentials: 'include'
@@ -89,7 +90,7 @@ const VoucherManagementPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Stats data received:', data);
+        logDev('✅ Stats data received:', data);
         setStats(data.data);
       } else {
         const errorText = await response.text();
@@ -101,10 +102,10 @@ const VoucherManagementPage = () => {
   };
 
   useEffect(() => {
-    console.log('🌍 Environment check:');
-    console.log('- NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
-    console.log('- Search term:', searchTerm);
-    console.log('- Status filter:', statusFilter);
+    logDev('🌍 Environment check:');
+    logDev('- NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
+    logDev('- Search term:', searchTerm);
+    logDev('- Status filter:', statusFilter);
     
     fetchVouchers();
     fetchStats();
@@ -150,7 +151,7 @@ const VoucherManagementPage = () => {
       
       const method = editingVoucher ? 'PUT' : 'POST';
 
-      console.log(`🚀 ${method} voucher:`, formData);
+      logDev(`🚀 ${method} voucher:`, formData);
 
       const response = await fetch(url, {
         method,
@@ -162,7 +163,7 @@ const VoucherManagementPage = () => {
       });
 
       const result = await response.json();
-      console.log('📡 Voucher save response:', result);
+      logDev('📡 Voucher save response:', result);
 
       if (response.ok) {
         alert(`✅ ${result.message}`);
@@ -201,7 +202,7 @@ const VoucherManagementPage = () => {
     if (!confirm(confirmMessage)) return;
 
     try {
-      console.log(`🗑️ Deleting voucher: ${voucher_code}`);
+      logDev(`🗑️ Deleting voucher: ${voucher_code}`);
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/vouchers/${voucher_code}`, {
         method: 'DELETE',
@@ -209,7 +210,7 @@ const VoucherManagementPage = () => {
       });
 
       const result = await response.json();
-      console.log('📡 Delete response:', result);
+      logDev('📡 Delete response:', result);
 
       if (response.ok) {
         alert(`✅ ${result.message}`);

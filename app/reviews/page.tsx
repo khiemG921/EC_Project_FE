@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Star, Heart, User, Send, Loader2, X } from 'lucide-react';
 import { Header } from '@/components/Header';
 import Footer from '@/components/Footer';
+import { logDev } from '@/lib/utils';
 
 
 interface Service {
@@ -109,7 +110,7 @@ const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '
         }
         const serviceData = await resService.json();
         setService(serviceData);
-        console.log("Service Data:", serviceData);
+        logDev("Service Data:", serviceData);
 
         // Gọi API reviews
         const resReviews = await fetchWithExponentialBackoff(`${API_BASE_URL}/reviews/service/${serviceId}`, {});
@@ -118,7 +119,7 @@ const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '
         }
         const dataReviews = await resReviews.json();
         setReviews(dataReviews);
-        console.log("Review Data:", dataReviews);
+        logDev("Review Data:", dataReviews);
 
       } catch (err: any) {
         console.error('Lỗi khi lấy dữ liệu:', err);

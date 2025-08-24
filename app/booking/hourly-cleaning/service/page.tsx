@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import BookingLayout, { AddressModal, PriceListModal } from '../../../../components/booking/BookingLayout';
 import { useRouter } from 'next/navigation';
+import { logDev } from '@/lib/utils';
 
 // --- DỮ LIỆU DỊCH VỤ ---
 const allPricingOptions = [
@@ -51,7 +52,6 @@ const ServiceSelectionPage = () => {
         if (savedBookingData) {
             try {
                 const parsed = JSON.parse(savedBookingData);
-                console.log('Khôi phục dữ liệu từ localStorage:', parsed);
                 if (parsed.workDate) {
                     parsed.workDate = new Date(parsed.workDate);
                 }
@@ -68,14 +68,13 @@ const ServiceSelectionPage = () => {
     // Lưu booking data vào localStorage mỗi khi thay đổi
     useEffect(() => {
         if (isDataRestored) {
-            console.log('Saving booking data to localStorage:', bookingData);
             localStorage.setItem('hourlyBookingData', JSON.stringify(bookingData));
 
             // Verify save worked
             const saved = localStorage.getItem('hourlyBookingData');
             if (saved) {
                 const parsed = JSON.parse(saved);
-                console.log('Verified save successful:', {
+                logDev('Verified save successful:', {
                     address: parsed.address,
                     durationId: parsed.durationId,
                     staffCount: parsed.staffCount
