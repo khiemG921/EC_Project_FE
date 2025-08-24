@@ -1,4 +1,6 @@
-const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || 'https://ecprojectbe-production.up.railway.app';
+// const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || 'https://ecprojectbe-production.up.railway.app';
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || ''); // No change here, just keeping context
+
 import { auth } from './firebase';
 
 async function getIdTokenMaybe(): Promise<string | undefined> {

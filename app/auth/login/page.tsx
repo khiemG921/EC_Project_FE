@@ -2,7 +2,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginUser, loginWithGoogle, getDashboardData, verifyToken } from "@/lib/authClient";
+import { loginUser, loginWithGoogle, verifyToken } from "@/lib/authClient";
 
 const slides = [
     "https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=2070&auto=format&fit=crop",
