@@ -6,6 +6,7 @@ import { Star, Heart, User, Send, Loader2, X } from 'lucide-react';
 import { Header } from '@/components/Header';
 import Footer from '@/components/Footer';
 import { logDev } from '@/lib/utils';
+import fetchWithAuth from '@/lib/apiClient';
 
 
 interface Service {
@@ -40,7 +41,7 @@ interface Review {
 const fetchWithExponentialBackoff = async (url: string, options: RequestInit, maxRetries = 5, delay = 1000) => {
   for (let i = 0; i < maxRetries; i++) {
     try {
-      const response = await fetch(url, options);
+      const response = await fetchWithAuth(url, options);
       if (response.status !== 429) { // 429 Too Many Requests
         return response;
       }
