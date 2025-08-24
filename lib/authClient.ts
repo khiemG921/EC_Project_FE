@@ -268,13 +268,17 @@ export async function verifyToken(passedIdToken?: string) {
     logDev('VerifyToken: Starting verification...');
     const url = API_BASE_URL ? `${API_BASE_URL}/api/auth/verify` : '/api/auth/verify';
 
-    const doRequest = async (tokenForHeader?: string) => {
-      const headers: HeadersInit = {};
+    const doRequest = async (tokenForHeader?: string, bust?: boolean) => {
+      const headers: HeadersInit = {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+      };
       if (tokenForHeader) headers['Authorization'] = `Bearer ${tokenForHeader}`;
-      const resp = await fetch(url, { method: 'GET', headers, credentials: 'include' });
+      const finalUrl = bust ? `${url}${url.includes('?') ? '&' : '?'}_ts=${Date.now()}` : url;
+      const resp = await fetch(finalUrl, { method: 'GET', headers, credentials: 'include', cache: 'no-store' });
       try {
         const authPrev = headers['Authorization'] ? String(headers['Authorization']).slice(0, 27) + '...' : 'none';
-        console.debug('[verifyToken] GET', url, 'status:', resp.status, 'auth:', authPrev);
+        console.debug('[verifyToken] GET', finalUrl, 'status:', resp.status, 'auth:', authPrev);
       } catch {}
       return resp;
     };
@@ -288,10 +292,17 @@ export async function verifyToken(passedIdToken?: string) {
     }
 
     let response = await doRequest(tokenToUse);
+    if (response.status === 304) {
+      // Fallback: retry with cache-busting query & no-store
+      response = await doRequest(tokenToUse, true);
+    }
     if (response.status === 401 && auth?.currentUser) {
       try {
         const refreshed = await auth.currentUser.getIdToken(true);
         response = await doRequest(refreshed);
+        if (response.status === 304) {
+          response = await doRequest(refreshed, true);
+        }
       } catch {}
     }
 
