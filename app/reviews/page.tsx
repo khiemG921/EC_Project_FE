@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import Footer from '@/components/Footer';
 import { logDev } from '@/lib/utils';
 import fetchWithAuth from '@/lib/apiClient';
+import { useUser } from '@/hooks/useUser';
 
 
 interface Service {
@@ -29,7 +30,7 @@ interface Customer {
 interface Review {
   review_id: number;
   customer_id: number;
-  job_id: number;
+  job_id?: number | null;
   service_id: number; // Đã đổi thành number
   rating_job: number;
   rating_tasker: number;
@@ -84,17 +85,9 @@ const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '
   const [reviewDetail, setReviewDetail] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Giả lập dữ liệu người dùng và yêu thích, bạn sẽ thay thế bằng dữ liệu thực
-  const MOCK_LOGGED_IN = true;
-  const MOCK_USER = { 
-    customer_id: 1, 
-    name: 'Lê Văn C', 
-    email: 'levanc@example.com', 
-    roles: ['customer'], 
-    avatar_url: 'https://placehold.co/40x40/f4f4f4/000000?text=C' 
-  };
+  // User thực từ hook
+  const { user, loading: authLoading } = useUser();
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
-  const user = MOCK_LOGGED_IN ? MOCK_USER : null;
 
   useEffect(() => {
     if (!serviceId) {
@@ -149,7 +142,7 @@ const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '
     
     const newReviewData = {
       customer_id: user.customer_id,
-      job_id: Math.floor(Math.random() * 1000),
+      // Không gửi job_id để tránh lỗi FK; hỗ trợ review công khai
       service_id: parseInt(serviceId as string, 10),
       rating_job: reviewRating,
       rating_tasker: reviewRating,
@@ -170,7 +163,16 @@ const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '
         }
 
         const result = await response.json();
-        const createdReview = { ...newReviewData, review_id: result.review_id || Date.now(), Customer: MOCK_USER };
+        const createdReview: Review = {
+          ...newReviewData,
+          review_id: result.review_id || Date.now(),
+          job_id: null, // not used in UI
+          Customer: {
+            customer_id: user.customer_id,
+            name: user.name || 'Khách hàng',
+            avatar_url: user.avatar_url || user.avatar || 'https://placehold.co/48x48/f4f4f4/000000?text=C',
+          },
+        };
         
         setReviews((prev) => [createdReview, ...prev]);
         setReviewRating(0);
@@ -199,7 +201,7 @@ const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '
     );
   };
   
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <Loader2 className="animate-spin text-teal-500" size={48} />
