@@ -1,8 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { fetchProfile, updateProfile, uploadAvatar} from '@/lib/profileUser';
+import { fetchProfile, updateProfile, uploadAvatar } from '@/lib/profileUser';
 import { logoutUser, verifyToken } from '@/lib/authClient';
+import { logDev } from '@/lib/utils';
 
 export function useUser() {
   const [user, setUser] = useState<any>(null);
@@ -24,55 +26,63 @@ export function useUser() {
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
-      setLoading(true);
-      const hasCookieToken = () => typeof document !== 'undefined' && document.cookie.includes('token=');
-      for (let i = 0; i < 3 && !auth?.currentUser && !hasCookieToken(); i++) {
-        await new Promise(r => setTimeout(r, 150));
-      }
+    setLoading(true);
+
+    const hasCookieToken = () =>
+      typeof document !== 'undefined' && (document.cookie || '').includes('token=');
+
+    // Core verify routine
+    const doVerify = async (idToken?: string) => {
       try {
-        let tokenToPass: string | undefined = undefined;
-        if (auth?.currentUser) {
-          try { tokenToPass = await auth.currentUser.getIdToken(false); } catch {}
-          if (!tokenToPass) { try { tokenToPass = await auth.currentUser.getIdToken(true); } catch {} }
-        }
-        if (!tokenToPass && !hasCookieToken()) {
-          if (mounted) {
-            setUser(null);
-            setLoading(false);
-          }
-          return;
-        }
-        const verified = await verifyToken(tokenToPass).catch(() => null);
-        if (mounted && verified && verified.user) {
-          const roles = Array.isArray(verified.user.roles) ? verified.user.roles : [verified.user.roles || 'customer'];
-          const vuser = verified.user;
-          const normalized = {
+        const verified = await verifyToken(idToken).catch(() => null);
+        if (!mounted) return;
+        if (verified && verified.user) {
+          const vuser = verified.user || {};
+          const roles = Array.isArray(vuser.roles) ? vuser.roles : [vuser.roles || 'customer'];
+          setUser({
             ...vuser,
             roles,
             avatar: vuser.avatar,
             dob: vuser.date_of_birth || vuser.dob || undefined,
             gender: vuser.gender || undefined,
             address: vuser.address || undefined,
-          };
-          setUser(normalized);
-          setLoading(false);
-          return;
+          });
         } else {
-          if (mounted) {
-            setUser(null);
-            setLoading(false);
-            return;
-          }
+          setUser(null);
         }
-      } catch (e) {
-        // ignore and proceed
-      }
-
+      } finally {
         if (mounted) setLoading(false);
-    })();
+      }
+    };
 
-    return () => { mounted = false; };
+    // Subscribe to Firebase auth changes for immediate updates
+    const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+      logDev('useUser onAuthStateChanged:', !!firebaseUser);
+      if (!mounted) return;
+      setLoading(true);
+      if (firebaseUser) {
+        let token: string | undefined;
+        try { token = await firebaseUser.getIdToken(false); } catch {}
+        if (!token) { try { token = await firebaseUser.getIdToken(true); } catch {} }
+        await doVerify(token);
+      } else if (hasCookieToken()) {
+        // No Firebase user, but we have a session cookie (server-verified)
+        await doVerify();
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
+    });
+
+    // On first mount, if we already have a cookie but no Firebase event yet, verify once
+    if (!auth?.currentUser && hasCookieToken()) {
+      doVerify();
+    }
+
+    return () => {
+      mounted = false;
+      try { unsub(); } catch {}
+    };
   }, [refetchProfile]);
 
   // Khi update profile thành công, refetch lại
