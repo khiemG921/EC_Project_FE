@@ -105,8 +105,8 @@ export async function loginWithGoogle() {
 
   try {
     // Thử verify token trước
-    await saveSession(idToken);
-    const userData = await verifyToken();
+  await saveSession(idToken);
+  const userData = await verifyToken(idToken);
     
     if (!userData || !userData.user) {
       // User chưa có trong database, tạo mới
@@ -213,7 +213,6 @@ export async function forceLogout() {
 export async function saveSession(idToken: string) {
   logDev('Saving session with token:', idToken.substring(0, 20) + '...');
   // Prefer calling FE edge route which will mirror backend Set-Cookie into FE cookie store
-  // If NEXT_PUBLIC_API_URL is not set (or edge route fails), fall back to direct backend call
   const edgeUrl = '/api/auth/session';
   let response: Response | null = null;
 
@@ -264,14 +263,33 @@ export async function saveSession(idToken: string) {
 }
 
 // Verify token và lấy thông tin user từ backend
-export async function verifyToken() {
+export async function verifyToken(passedIdToken?: string) {
   try {
-    logDev('VerifyToken: Starting verification (cookie-based)...');
+    logDev('VerifyToken: Starting verification...');
     const url = API_BASE_URL ? `${API_BASE_URL}/api/auth/verify` : '/api/auth/verify';
-    const response = await fetch(url, {
-      method: "GET",
-      credentials: "include",
-    });
+
+    const doRequest = async (tokenForHeader?: string) => {
+      const headers: HeadersInit = {};
+      if (tokenForHeader) headers['Authorization'] = `Bearer ${tokenForHeader}`;
+      const resp = await fetch(url, { method: 'GET', headers, credentials: 'include' });
+      return resp;
+    };
+
+    let tokenToUse = passedIdToken;
+    if (!tokenToUse && auth?.currentUser) {
+      try { tokenToUse = await auth.currentUser.getIdToken(); } catch {}
+      if (!tokenToUse) {
+        try { tokenToUse = await auth.currentUser.getIdToken(true); } catch {}
+      }
+    }
+
+    let response = await doRequest(tokenToUse);
+    if (response.status === 401 && auth?.currentUser) {
+      try {
+        const refreshed = await auth.currentUser.getIdToken(true);
+        response = await doRequest(refreshed);
+      } catch {}
+    }
 
     logDev('VerifyToken: Response status:', response.status);
 
@@ -279,7 +297,7 @@ export async function verifyToken() {
       const errorData = await response.json().catch(() => ({}));
       logDev('VerifyToken: Error response:', errorData);
       if (response.status === 401) {
-        throw new Error(errorData.error || "No authentication token");
+        throw new Error(errorData.error || 'No token provided');
       }
       throw new Error("Failed to verify token");
     }

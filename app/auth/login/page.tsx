@@ -38,7 +38,7 @@ const LoginPage = () => {
                     let lastErr: any = null;
                     for (let i = 0; i < retries; i++) {
                         try {
-                            const res = await verifyToken();
+                            const res = await verifyToken(token);
                             return res;
                         } catch (err) {
                             lastErr = err;
