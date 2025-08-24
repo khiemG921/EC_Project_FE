@@ -65,10 +65,24 @@ const LoginPage = () => {
 
     // Nếu muốn test Google login mock, có thể dùng logic tương tự:
     async function handleGoogleLogin() {
-        // Nếu muốn test Google login thật, có thể gọi loginWithGoogle ở đây
-        const token = await loginWithGoogle();
-        // Sau khi thành công, set user = MOCK_USER
-        router.push('/dashboard');
+        setIsLoading(true);
+        setError('');
+        try {
+            const token = await loginWithGoogle();
+            try {
+                const res = await verifyToken(token);
+                logDev('Google verify result:', res);
+                router.push('/dashboard');
+            } catch (e) {
+                console.error('Backend verification failed after Google login:', e);
+                setError('Đăng nhập Google thành công nhưng không thể xác thực phiên. Vui lòng thử lại.');
+            }
+        } catch (e: any) {
+            console.error('Google login error:', e);
+            setError('Đăng nhập Google thất bại: ' + (e?.message || 'Unknown error'));
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     useEffect(() => {
