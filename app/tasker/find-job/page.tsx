@@ -31,7 +31,8 @@ const mockServices = [
 
 // --- Thành phần phụ: Thẻ công việc ---
 
-const JobCard = ({ job, onAccept, onView, accepting }: { job: TaskerJob; onAccept: (id: number) => void; onView: (id: number) => void; accepting?: boolean }) => {
+const JobCard: React.FC<{ job: TaskerJob; onAccept: (id: number) => void; onView: (id: number) => void; accepting?: boolean }>
+= ({ job, onAccept, onView, accepting }) => {
     const router = useRouter();
 
     // Hàm tính thời gian đã đăng công việc
@@ -117,6 +118,9 @@ const FindJobsPage = () => {
 
     // Hàm lấy danh sách công việc từ API
     const fetchJobs = useCallback(async () => {
+        if (!user) return;
+        const isTasker = Array.isArray(user.roles) && user.roles.includes('tasker');
+        if (!isTasker) return;
         try {
             const res = await fetchWithAuth(`/api/tasker/jobs?city=${city}`, { method: 'GET' });
             if (!res.ok) throw new Error('Không thể tải danh sách công việc');
@@ -126,7 +130,7 @@ const FindJobsPage = () => {
             console.error(e);
             setJobs([]);
         }
-    }, [city]);
+    }, [city, user?.id]);
 
     useEffect(() => {
         fetchJobs();
