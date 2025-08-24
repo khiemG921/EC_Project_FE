@@ -88,6 +88,17 @@ export default function PaymentPage() {
             return;
         }
 
+        if (selectedPaymentMethod === 'paypal') {
+            if (!paypalClientId) {
+                await Swal.fire({
+                    text: 'Thiếu cấu hình PayPal client ID. Vui lòng thiết lập biến NEXT_PUBLIC_PAYPAL_CLIENT_ID.',
+                    icon: 'warning',
+                    confirmButtonColor: '#14b8a6',
+                    confirmButtonText: 'Đóng',
+                    title: '',
+                });
+                return;
+            }
             // 1) Lấy tỷ giá USD/VND
             const exKey = (globalThis as any)?.process?.env?.NEXT_PUBLIC_EXCHANGE_RATE_API_KEY;
             const rateRes = await fetch(
