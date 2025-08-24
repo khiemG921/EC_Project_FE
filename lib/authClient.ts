@@ -263,16 +263,30 @@ export async function saveSession(idToken: string) {
 }
 
 // Verify token và lấy thông tin user từ backend
-export async function verifyToken(passedIdToken?: string) {
+let __inFlightVerify: Promise<any> | null = null;
+let __lastVerifyAt = 0;
+let __lastVerifyResult: any | null = null;
+
+export async function verifyToken(passedIdToken?: string, opts?: { force?: boolean }) {
   try {
     logDev('VerifyToken: Starting verification...');
     const url = API_BASE_URL ? `${API_BASE_URL}/api/auth/verify` : '/api/auth/verify';
 
+    // Coalesce concurrent calls and throttle if recently verified
+    if (!opts?.force && !passedIdToken) {
+      if (__inFlightVerify) {
+        logDev('VerifyToken: Using in-flight request');
+        return __inFlightVerify;
+      }
+      const now = Date.now();
+      if (__lastVerifyResult && now - __lastVerifyAt < 3000) {
+        logDev('VerifyToken: Returning recent cached result');
+        return __lastVerifyResult;
+      }
+    }
+
     const doRequest = async (tokenForHeader?: string, bust?: boolean) => {
-      const headers: HeadersInit = {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      };
+      const headers: HeadersInit = {};
       if (tokenForHeader) headers['Authorization'] = `Bearer ${tokenForHeader}`;
       const finalUrl = bust ? `${url}${url.includes('?') ? '&' : '?'}_ts=${Date.now()}` : url;
       const resp = await fetch(finalUrl, { method: 'GET', headers, credentials: 'include', cache: 'no-store' });
@@ -291,20 +305,36 @@ export async function verifyToken(passedIdToken?: string) {
       }
     }
 
-    let response = await doRequest(tokenToUse);
+    const exec = async () => {
+      let response = await doRequest(tokenToUse);
+      if (response.status === 304) {
+        // Fallback: retry with cache-busting query & no-store
+        response = await doRequest(tokenToUse, true);
+      }
+      if (response.status === 401 && auth?.currentUser) {
+        try {
+          const refreshed = await auth.currentUser.getIdToken(true);
+          response = await doRequest(refreshed);
+          if (response.status === 304) {
+            response = await doRequest(refreshed, true);
+          }
+        } catch {}
+      }
+      return response;
+    };
+
+    // Mark in-flight to coalesce concurrent calls
+    if (!opts?.force && !passedIdToken) {
+      __inFlightVerify = exec();
+    }
+
+    let response = await (__inFlightVerify || exec());
     if (response.status === 304) {
       // Fallback: retry with cache-busting query & no-store
       response = await doRequest(tokenToUse, true);
     }
-    if (response.status === 401 && auth?.currentUser) {
-      try {
-        const refreshed = await auth.currentUser.getIdToken(true);
-        response = await doRequest(refreshed);
-        if (response.status === 304) {
-          response = await doRequest(refreshed, true);
-        }
-      } catch {}
-    }
+  // clear in-flight
+  __inFlightVerify = null;
 
     logDev('VerifyToken: Response status:', response.status);
 
@@ -319,8 +349,12 @@ export async function verifyToken(passedIdToken?: string) {
 
     const result = await response.json();
     logDev('VerifyToken: Success, got user:', !!result.user);
+  // cache result briefly
+  __lastVerifyAt = Date.now();
+  __lastVerifyResult = result;
     return result;
   } catch (networkError) {
+  __inFlightVerify = null;
     if (networkError instanceof TypeError && networkError.message.includes('fetch')) {
       throw new Error("Network error - cannot reach authentication server");
     }
