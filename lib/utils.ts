@@ -7,6 +7,6 @@ export function cn(...inputs: ClassValue[]) {
 
 export function logDev(...args) {
   if (process.env.NODE_ENV === 'development') {
-    logDev(...args);
+    console.log(...args);
   }
 }
