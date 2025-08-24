@@ -15,7 +15,7 @@ async function getIdTokenMaybe(refresh = false): Promise<string | undefined> {
       const match = cookie.split(';').map(s => s.trim()).find(s => s.startsWith('token='));
       if (match) {
         const val = match.split('=')[1];
-        if (val && val !== 'undefined' && val !== 'null') return val;
+  if (val && val !== 'undefined' && val !== 'null' && val !== '1' && val.includes('.')) return val;
       }
     }
   } catch {}
@@ -36,8 +36,9 @@ export async function fetchWithAuth(pathOrUrl: string, init: RequestInit = {}) {
   const url = isInternal ? pathOrUrl : (pathOrUrl.startsWith('/api') ? joinApi(API_BASE_URL, pathOrUrl) : pathOrUrl);
 
   const headers = new Headers(init.headers || {});
+  const hadAuthHeader = headers.has('Authorization');
   const token = await getIdTokenMaybe(false);
-  if (token) headers.set('Authorization', `Bearer ${token}`);
+  if (!hadAuthHeader && token) headers.set('Authorization', `Bearer ${token}`);
 
   // Set JSON content-type by default when body present and not FormData
   if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
@@ -54,7 +55,7 @@ export async function fetchWithAuth(pathOrUrl: string, init: RequestInit = {}) {
   if (res.status === 401) {
     try {
       const refreshed = await getIdTokenMaybe(true);
-      if (refreshed) {
+      if (refreshed && !hadAuthHeader) {
         headers.set('Authorization', `Bearer ${refreshed}`);
         res = await fetch(url, { ...init, headers, credentials: init.credentials ?? 'include' });
       }

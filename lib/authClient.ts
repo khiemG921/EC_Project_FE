@@ -223,6 +223,7 @@ export async function saveSession(idToken: string) {
   // Prefer calling FE edge route which will mirror backend Set-Cookie into FE cookie store
   const edgeUrl = '/api/auth/session';
   let response: Response | null = null;
+  let backendResponse: Response | null = null;
 
   try {
     response = await fetch(edgeUrl, {
@@ -236,35 +237,32 @@ export async function saveSession(idToken: string) {
       console.warn('FE edge session route failed, falling back to backend:', e);
     }
   }
-
-  if (!response || !response.ok) {
-    // fallback to direct backend if API_BASE_URL provided
-    if (API_BASE_URL) {
-      try {
-        response = await fetch(`${API_BASE_URL}/api/auth/session`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idToken }),
-          credentials: 'include',
-        });
-      } catch (e) {
-        console.error('Direct backend save session failed:', e);
-        throw new Error('Failed to save session (network)');
-      }
+  // Always also call backend directly to ensure the browser stores the backend-domain cookie
+  if (API_BASE_URL) {
+    try {
+      backendResponse = await fetch(`${API_BASE_URL}/api/auth/session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+        credentials: 'include',
+      });
+    } catch (e) {
+      console.warn('Direct backend save session failed (non-fatal):', e);
     }
   }
   
-  if (!response) throw new Error('Save session failed: no response');
+  const effective = backendResponse && backendResponse.ok ? backendResponse : response;
+  if (!effective) throw new Error('Save session failed: no response');
 
-  logDev('Save session response status:', response.status);
+  logDev('Save session response status:', effective.status);
 
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => '');
+  if (!effective.ok) {
+    const errorText = await effective.text().catch(() => '');
     console.error('Save session failed:', errorText);
     throw new Error(errorText || "Failed to save session");
   }
   
-  const result = await response.json().catch(() => ({}));
+  const result = await effective.json().catch(() => ({}));
   logDev('Session saved successfully:', result);
   console.log('Session saved successfully:', result);
   return result;

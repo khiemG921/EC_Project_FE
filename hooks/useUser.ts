@@ -31,7 +31,19 @@ export function useUser() {
         await new Promise(r => setTimeout(r, 150));
       }
       try {
-        const verified = await verifyToken().catch(() => null);
+        let tokenToPass: string | undefined = undefined;
+        if (auth?.currentUser) {
+          try { tokenToPass = await auth.currentUser.getIdToken(false); } catch {}
+          if (!tokenToPass) { try { tokenToPass = await auth.currentUser.getIdToken(true); } catch {} }
+        }
+        if (!tokenToPass && !hasCookieToken()) {
+          if (mounted) {
+            setUser(null);
+            setLoading(false);
+          }
+          return;
+        }
+        const verified = await verifyToken(tokenToPass).catch(() => null);
         if (mounted && verified && verified.user) {
           const roles = Array.isArray(verified.user.roles) ? verified.user.roles : [verified.user.roles || 'customer'];
           const vuser = verified.user;
@@ -46,19 +58,18 @@ export function useUser() {
           setUser(normalized);
           setLoading(false);
           return;
+        } else {
+          if (mounted) {
+            setUser(null);
+            setLoading(false);
+            return;
+          }
         }
       } catch (e) {
-        // ignore and fallback
+        // ignore and proceed
       }
 
-      // fallback to existing behavior
-      try {
-        await refetchProfile();
-      } catch (e) {
-        // refetchProfile handles setting user to null
-      } finally {
         if (mounted) setLoading(false);
-      }
     })();
 
     return () => { mounted = false; };
