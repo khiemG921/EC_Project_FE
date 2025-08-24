@@ -5,6 +5,7 @@ import BookingLayout from '../../../../components/booking/BookingLayout';
 import { serviceInfo, allPricingOptions } from '../bookingConfig';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Wallet } from 'lucide-react';
+import fetchWithAuth from '@/lib/apiClient';
 
 // Types
 interface Voucher {
@@ -53,7 +54,7 @@ function UpholsteryConfirmContent() {
         let aborted = false;
         (async () => {
             try {
-                const res = await fetch(
+                const res = await fetchWithAuth(
                     `${process.env.NEXT_PUBLIC_API_URL}/api/customer/reward-points`,
                     { credentials: 'include' }
                 );

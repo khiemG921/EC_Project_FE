@@ -9,6 +9,7 @@ import {
     getScheduleSummary,
 } from '../bookingConfig';
 import { Wallet } from 'lucide-react';
+import fetchWithAuth from '@/lib/apiClient';
 
 const ConfirmStep = () => {
     const router = useRouter();
@@ -45,7 +46,7 @@ const ConfirmStep = () => {
         let aborted = false;
         (async () => {
             try {
-                const res = await fetch(
+                const res = await fetchWithAuth(
                     `${process.env.NEXT_PUBLIC_API_URL}/api/customer/reward-points`,
                     { credentials: 'include' }
                 );

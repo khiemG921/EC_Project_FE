@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import { Wallet } from 'lucide-react';
 import { logDev } from '@/lib/utils';
+import fetchWithAuth from '@/lib/apiClient';
 
 const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || 'https://ecprojectbe-production.up.railway.app';
 
@@ -331,7 +332,7 @@ export default function ACConfirmStep() {
         let aborted = false;
         (async () => {
             try {
-                const res = await fetch(
+                const res = await fetchWithAuth(
                     `${process.env.NEXT_PUBLIC_API_URL}/api/customer/reward-points`,
                     { credentials: 'include' }
                 );
