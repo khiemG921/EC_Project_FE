@@ -103,8 +103,8 @@ const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '
 
     const fetchServiceAndReviews = async () => {
       try {
-  // Gọi API services (single service)
-  const resService = await fetchWithExponentialBackoff(`${API_BASE_URL}/api/services/${serviceId}`, {});
+        // Gọi API services (single service)
+        const resService = await fetchWithExponentialBackoff(`${API_BASE_URL}/api/services/${serviceId}`, {});
         if (!resService.ok) {
           throw new Error('Không thể tải thông tin dịch vụ');
         }
@@ -112,9 +112,10 @@ const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '
         setService(serviceData);
         logDev("Service Data:", serviceData);
 
-  // Gọi API reviews
-  const resReviews = await fetchWithExponentialBackoff(`${API_BASE_URL}/api/reviews/service/${serviceId}`, {});
+        const resReviews = await fetchWithExponentialBackoff(`${API_BASE_URL}/api/reviews/service/${serviceId}`, {});
         if (!resReviews.ok) {
+          const txt = await resReviews.text().catch(() => '');
+          console.error('Fetch reviews failed:', resReviews.status, txt);
           throw new Error('Không thể tải các đánh giá');
         }
         const dataReviews = await resReviews.json();
