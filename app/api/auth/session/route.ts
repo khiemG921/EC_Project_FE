@@ -14,11 +14,6 @@ export async function POST(req: Request) {
 		const idToken = body?.idToken;
 		if (!idToken) return NextResponse.json({ error: 'missing idToken' }, { status: 400 });
 
-		// Determine if we should mark cookie as secure based on current request URL
-		const isSecure = (() => {
-			try { return new URL(req.url).protocol === 'https:'; } catch { return true; }
-		})();
-
 		// Forward to backend to create session
 		const backendRes = await fetch(`${API_BASE}/api/auth/session`, {
 			method: 'POST',
@@ -34,7 +29,6 @@ export async function POST(req: Request) {
 		try { data = JSON.parse(text); } catch { data = { raw: text }; }
 
 		const res = NextResponse.json(data, { status: backendRes.status });
-		const sameSite: 'none' | 'lax' = isSecure ? 'none' : 'lax';
 
 		// Mirror token from backend Set-Cookie if present
 		const setCookie = backendRes.headers.get('set-cookie');
@@ -42,8 +36,8 @@ export async function POST(req: Request) {
 		if (cookieToken) {
 			res.cookies.set('token', cookieToken, {
 				httpOnly: true,
-				secure: isSecure,
-				sameSite,
+				secure: true,
+				sameSite: 'none',
 				path: '/',
 				maxAge: 60 * 60 * 24 * 7,
 			});
@@ -51,7 +45,7 @@ export async function POST(req: Request) {
 		}
 
 		// Fallback: set short marker so middleware sees something while full session propagates
-		res.cookies.set('token', '1', { path: '/', maxAge: 60 * 5, secure: isSecure, sameSite });
+		res.cookies.set('token', '1', { path: '/', maxAge: 60 * 5 });
 		return res;
 	} catch (err) {
 		return NextResponse.json({ error: 'internal' }, { status: 500 });
