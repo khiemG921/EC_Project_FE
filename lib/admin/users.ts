@@ -2,7 +2,7 @@ import fetchWithAuth from '@/lib/apiClient';
 import type { User } from '@/types/user';
 
 export async function fetchUsers(): Promise<User[]> {
-    const res = await fetchWithAuth('/api/admin/customers/getAllUser', { method: 'GET' });
+    const res = await fetchWithAuth('/api/admin/users/getAllUser', { method: 'GET' });
     if (!res.ok)
         throw new Error(
             `Không thể tải danh sách người dùng: ${res.status} ${res.statusText}`
@@ -42,7 +42,7 @@ export async function createUser(data: User): Promise<User> {
         reward_points: data.rewardPoints || 0,
     };
 
-    const res = await fetchWithAuth('/api/admin/customers/createUser', {
+    const res = await fetchWithAuth('/api/admin/users/createUser', {
         method: 'POST',
         body: JSON.stringify(backendData),
     });
@@ -87,7 +87,7 @@ export async function updateUser(
     if (data.rewardPoints !== undefined)
         backendData.reward_points = data.rewardPoints;
 
-    const res = await fetchWithAuth(`/api/admin/customers/updateUser/${id}`, {
+    const res = await fetchWithAuth(`/api/admin/users/updateUser/${id}`, {
         method: 'PUT',
         body: JSON.stringify(backendData),
     });
@@ -117,7 +117,7 @@ export async function updateUser(
 }
 
 export async function deleteUser(id: string): Promise<void> {
-    const res = await fetchWithAuth(`/api/admin/customers/deleteUser/${id}`, {
+    const res = await fetchWithAuth(`/api/admin/users/deleteUser/${id}`, {
         method: 'DELETE',
     });
     if (!res.ok)
@@ -127,7 +127,7 @@ export async function deleteUser(id: string): Promise<void> {
 }
 
 export async function setRoleUser(id: string, role: string): Promise<void> {
-    const res = await fetchWithAuth(`/api/admin/customers/setRole/${id}`, {
+    const res = await fetchWithAuth(`/api/admin/users/setRole/${id}`, {
         method: 'POST',
         body: JSON.stringify({ role }),
     });
@@ -135,4 +135,26 @@ export async function setRoleUser(id: string, role: string): Promise<void> {
         throw new Error(
             `Không thể cập nhật vai trò người dùng: ${res.status} ${res.statusText}`
         );
+}
+
+// Thêm role (admin tasker)
+export async function grantRoleUser(id: string, role: 'admin' | 'tasker'): Promise<string[]> {
+    const res = await fetchWithAuth(`/api/admin/users/grantRole/${id}`, {
+        method: 'POST',
+        body: JSON.stringify({ role }),
+    });
+    if (!res.ok) throw new Error(`Không thể cấp quyền: ${res.status} ${res.statusText}`);
+    const data = await res.json();
+    return data.roles as string[];
+}
+
+// Thu hồi role (admin tasker)
+export async function revokeRoleUser(id: string, role: 'admin' | 'tasker'): Promise<string[]> {
+    const res = await fetchWithAuth(`/api/admin/users/revokeRole/${id}`, {
+        method: 'POST',
+        body: JSON.stringify({ role }),
+    });
+    if (!res.ok) throw new Error(`Không thể thu hồi quyền: ${res.status} ${res.statusText}`);
+    const data = await res.json();
+    return data.roles as string[];
 }

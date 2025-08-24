@@ -32,7 +32,7 @@ const Footer = () => (
           <ul className="mt-4 space-y-3">
             <li className="flex items-start"><MapPin size={20} className="mr-3 mt-1 flex-shrink-0" /><span className="text-gray-400">123 Đường ABC, Quận 1, TP. Hồ Chí Minh</span></li>
             <li className="flex items-center"><Mail size={20} className="mr-3 flex-shrink-0" /><a href="mailto:support@cleannow.vn" className="text-gray-400 hover:text-white transition-colors">support@cleannow.vn</a></li>
-            <li className="flex items-center"><Phone size={20} className="mr-3 flex-shrink-0" /><a href="tel:19001234" className="text-gray-400 hover:text-white transition-colors">1900 1234</a></li>
+            <li className="flex items-center"><Phone size={20} className="mr-3 flex-shrink-0" /><a href="tel:19008888" className="text-gray-400 hover:text-white transition-colors">1900 8888</a></li>
           </ul>
         </div>
       </div>

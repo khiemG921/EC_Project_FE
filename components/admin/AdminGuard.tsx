@@ -18,20 +18,12 @@ export default function AdminGuard({ children }: AdminGuardProps) {
     const [isAdmin, setIsAdmin] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [checking, setChecking] = useState(true);
+    const [booted, setBooted] = useState(false);
 
     // verify existing session cookie
     useEffect(() => {
         let mounted = true;
         (async () => {
-            // Optimistic: if previous page already authenticated admin, keep UI without flashing
-            try {
-                const cached = typeof window !== 'undefined' ? window.sessionStorage.getItem('adminAuthed') : null;
-                if (cached === '1') {
-                    setIsAdmin(true);
-                    setShowLoginForm(false);
-                }
-            } catch {}
-
             try {
                 const result = await verifyBackendToken();
                 const roles: string[] = result?.user?.roles || [];
@@ -40,19 +32,17 @@ export default function AdminGuard({ children }: AdminGuardProps) {
                 if (hasAdmin) {
                     setIsAdmin(true);
                     setShowLoginForm(false);
-                    try { window.sessionStorage.setItem('adminAuthed', '1'); } catch {}
                 } else {
                     setShowLoginForm(true);
                     setIsAdmin(false);
-                    try { window.sessionStorage.removeItem('adminAuthed'); } catch {}
                 }
             } catch {
                 if (!mounted) return;
                 setShowLoginForm(true);
                 setIsAdmin(false);
-                try { window.sessionStorage.removeItem('adminAuthed'); } catch {}
             } finally {
                 if (mounted) setChecking(false);
+                setBooted(true);
             }
         })();
         return () => { mounted = false; };
@@ -73,7 +63,7 @@ export default function AdminGuard({ children }: AdminGuardProps) {
             // Login with Firebase and persist session cookie in backend
             await loginUser(loginForm.email, loginForm.password);
 
-            // Verify session and role
+            // Verify session and role immediately
             try {
                 const result = await verifyBackendToken();
                 const roles: string[] = result?.user?.roles || [];
@@ -89,7 +79,6 @@ export default function AdminGuard({ children }: AdminGuardProps) {
             setIsAdmin(true);
             setShowLoginForm(false);
             setLoginError('');
-            try { window.sessionStorage.setItem('adminAuthed', '1'); } catch {}
         } catch (error) {
             console.error('Admin login error:', error);
             setLoginError('Đăng nhập thất bại, vui lòng kiểm tra thông tin.');
@@ -108,7 +97,6 @@ export default function AdminGuard({ children }: AdminGuardProps) {
             setIsAdmin(false);
             setShowLoginForm(true);
             setLoginForm({ email: '', password: '' });
-            try { window.sessionStorage.removeItem('adminAuthed'); } catch {}
         }
     };
 

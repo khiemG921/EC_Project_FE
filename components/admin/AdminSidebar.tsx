@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useUser } from '@/hooks/useUser';
 
 interface MenuItem {
     icon: string;
@@ -84,6 +85,7 @@ const menuItems: MenuItem[] = [
 export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
     const pathname = usePathname();
     const [collapsed, setCollapsed] = useState(false);
+    const { user } = useUser();
 
     const handleLogout = () => {
         if (onLogout) {
@@ -160,7 +162,7 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
                 {!collapsed && (
                     <div className="mb-3">
                         <div className="text-sm font-medium text-white truncate">
-                            👤 {JSON.parse(localStorage.getItem('mockAdminUser') || '{}').email || 'admin@mock.com'}
+                            👤 {user?.email || '—'}
                         </div>
                         <div className="text-xs text-slate-400">
                             Administrator

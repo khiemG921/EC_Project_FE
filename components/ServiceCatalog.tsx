@@ -10,7 +10,8 @@ import Link from 'next/link';
 const ServiceCatalog = ({ services }: { services: Service[] }) => {
     // Lấy thông tin user từ auth context
     const { user } = useAuth();
-    const { favorites, toggleFavorite, loading, isAuthenticated } = useFavoriteServices();
+    const isLoggedIn = !!user; // Dùng trạng thái user từ Header làm nguồn chân lý hiển thị
+    const { favorites, toggleFavorite, loading } = useFavoriteServices();
     const { watchlist, toggleWatchlist } = useWatchlistServices(); // Sử dụng hook mới cho watchlist
 
     // Lọc chỉ dịch vụ đang hoạt động
@@ -27,7 +28,7 @@ const ServiceCatalog = ({ services }: { services: Service[] }) => {
     const defaultImg = 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExa3kzdW1zZjNkYXR2N2lqaXNlNnYzbW02N2tqZmtkeGM4ZWs5NXkxZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/je9T6CsmiLj3i/giphy.gif';
 
     const handleToggleFavorite = async (serviceId: string) => {
-        if (!user || !isAuthenticated) {
+    if (!isLoggedIn) {
             window.location.href = '/auth/login';
             return;
         }
@@ -39,7 +40,7 @@ const ServiceCatalog = ({ services }: { services: Service[] }) => {
     };
 
     const handleToggleWatchlist = async (serviceId: string) => {
-        if (!user || !isAuthenticated) {
+    if (!isLoggedIn) {
             window.location.href = '/auth/login';
             return;
         }
@@ -63,16 +64,16 @@ const ServiceCatalog = ({ services }: { services: Service[] }) => {
                         <h3 className="text-2xl font-bold text-emerald-600 mb-8 border-l-4 border-emerald-500 pl-4">{type}</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                             {servicesByType[type].map((service) => {
-                                // CHỈ hiển thị favorite khi user đã authenticated
-                                const isFavorite = isAuthenticated && favorites.includes(service.id);
+                                // Chỉ hiển thị khi đã đăng nhập theo Header
+                                const isFavorite = isLoggedIn && favorites.includes(service.id);
                                 // Kiểm tra xem dịch vụ có trong watchlist không
-                                const isSaved = isAuthenticated && watchlist.some(s => s.id === service.id);
+                                const isSaved = isLoggedIn && watchlist.some(s => s.id === service.id);
 
                                 return (
                                     <div key={service.id} className="relative bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 flex flex-col items-center text-center group">
                                         
                                         {/* Nút yêu thích - CHỈ hiển thị khi đã đăng nhập */}
-                                        {isAuthenticated && (
+                                        {isLoggedIn && (
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -89,7 +90,7 @@ const ServiceCatalog = ({ services }: { services: Service[] }) => {
                                         )}
                                         
                                         {/* Nút Xem sau - ĐỐI XỨNG với nút yêu thích */}
-                                        {isAuthenticated && (
+                                        {isLoggedIn && (
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();

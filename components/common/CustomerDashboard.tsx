@@ -45,7 +45,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user, onLogout, activ
         { label: 'Lịch sử đặt', icon: History, href: '/history' },
         { label: 'Ưu đãi', icon: Tag, href: '/vouchers' },
         { label: 'Yêu thích', icon: Heart, href: '/favorites' },
-        { label: 'Cài đặt', icon: Settings, href: '/settings' },
+        // { label: 'Cài đặt', icon: Settings, href: '/settings' },
     ];
 
     return (

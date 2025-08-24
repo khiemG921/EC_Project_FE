@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
+  const path = request.nextUrl.pathname;
 
   // Protected routes that require authentication
   const protectedRoutes = [
@@ -24,9 +25,23 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
+  // Admin routes require token; verify role and redirect to /auth/login if needed
+  if (path.startsWith('/admin') && !token) {
+    return NextResponse.redirect(new URL('/auth/login', request.url));
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/', '/dashboard/:path*', '/booking/:path*', '/history/:path*', '/vouchers/:path*', '/profile/:path*', '/favorite/:path*'],
+  matcher: [
+    '/',
+    '/dashboard/:path*',
+    '/booking/:path*',
+    '/history/:path*',
+    '/vouchers/:path*',
+    '/profile/:path*',
+    '/favorite/:path*',
+    '/admin/:path*'
+  ],
 };

@@ -2,7 +2,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginUser, loginWithGoogle, getDashboardData, verifyToken } from "@/lib/authClient";
+import { loginUser, loginWithGoogle, verifyToken } from "@/lib/authClient";
 import { logDev } from '@/lib/utils';
 
 const slides = [

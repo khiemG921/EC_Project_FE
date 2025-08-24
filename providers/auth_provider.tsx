@@ -63,8 +63,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           // Verify token và lấy thông tin user từ backend
-          const userData = await verifyToken();
-          // logDev('User data from backend:', userData);
+          const userData = await verifyToken(idToken);
+          // console.log('User data from backend:', userData);
           
           if (userData && userData.user) {
             setUser(userData.user);
@@ -76,8 +76,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const syncResponse = await fetchWithAuth('/api/auth/sync-user', { method: 'POST' });
               
               if (syncResponse.ok) {
-                logDev('User synced successfully, retrying verification...');
-                const retryUserData = await verifyToken();
+                console.log('User synced successfully, retrying verification...');
+                const retryUserData = await verifyToken(idToken);
                 if (retryUserData && retryUserData.user) {
                   setUser(retryUserData.user);
                 } else {

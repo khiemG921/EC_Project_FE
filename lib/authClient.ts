@@ -3,27 +3,37 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signOut,
-  sendPasswordResetEmail,
   User,
-  createUserWithEmailAndPassword,
-  updateProfile,
 } from "firebase/auth";
 import { auth } from "./firebase";
+
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || '');
+
 import fetchWithAuth from '@/lib/apiClient';
 import { clearAuthTokens } from './authUtils';
 import { logDev } from '@/lib/utils';
 
-const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '';
+// const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '';
 
 // Xác thực mã đăng ký tài khoản
 export async function verifyRegisterCode(email: string, code: string) {
-  const response = await fetch(`${API_BASE_URL}/api/auth/verify-register-code`, {
+  if (!API_BASE_URL) {
+    console.warn('VERIFY_REGISTER_CODE: NEXT_PUBLIC_API_URL not set, using relative path');
+  }
+
+  const res = await fetchWithAuth(`${API_BASE_URL || ''}/api/auth/verify-register-code`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ email, code }),
   });
-  if (!response.ok) throw new Error("Mã xác thực không đúng hoặc hết hạn");
-  return response.json();
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(body || `Verify code failed: HTTP ${res.status}`);
+  }
+
+  return res.json();
 }
 
 // Đăng ký user với email và mật khẩu
@@ -33,33 +43,31 @@ export async function registerUser(email: unknown, password: unknown, name?: str
   const nameStr = name ? String(name).trim() : '';
   const phoneStr = phone ? String(phone).trim() : '';
   
-  logDev('Starting registration for:', emailStr);
-  
+  if (!emailStr || !passwordStr) throw new Error('Email và mật khẩu là bắt buộc');
+
   try {
-    // Gọi backend để đăng ký - backend sẽ tạo Firebase user và gửi OTP
-    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+    const res = await fetchWithAuth(`${API_BASE_URL || ''}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ 
         email: emailStr, 
         password: passwordStr,
         name: nameStr,
         phone: phoneStr
       }),
-      credentials: "include",
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Đăng ký thất bại");
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => null);
+      const msg = errBody?.error || errBody?.message || `HTTP ${res.status}`;
+      throw new Error(msg);
     }
-    
-    const result = await response.json();
-    logDev('Registration response:', result);
+
+    const result = await res.json();
     return result;
-    
   } catch (error) {
-    console.error('Registration failed:', error);
+    console.error('registerUser failed:', error);
     throw error;
   }
 }
@@ -69,17 +77,15 @@ export async function loginUser(email: unknown, password: unknown) {
   const emailStr = String(email).trim();
   const passwordStr = String(password).trim();
   
-  logDev('Login attempt for:', emailStr);
-  
   try {
     // Đăng nhập Firebase
+    console.log('url:', `${API_BASE_URL}`);
+
     const result = await signInWithEmailAndPassword(auth, emailStr, passwordStr);
-    logDev('Firebase login successful:', result.user.uid);
     
     const idToken = await result.user.getIdToken();
-    logDev('Got Firebase token:', idToken.substring(0, 20) + '...');
     
-    // Lưu session vào backend
+  // Lưu session vào backend (FE edge route sẽ mirror cookie từ BE)
   await saveSession(idToken);
     logDev('Session saved successfully');
     
@@ -96,9 +102,7 @@ export async function loginWithGoogle() {
   const result = await signInWithPopup(auth, provider);
   const user = result.user;
   const idToken = await user.getIdToken();
-  
-  // Kiểm tra xem user đã có trong database chưa
-  // Nếu chưa thì tạo mới (tương tự register)
+
   try {
     // Thử verify token trước
     await saveSession(idToken);
@@ -131,11 +135,11 @@ async function registerGoogleUser(userData: {
   avatar: string;
   firebaseId: string;
 }) {
-  const response = await fetch(`${API_BASE_URL}/api/auth/google-register`, {
+  const response = await fetchWithAuth(`${API_BASE_URL || ''}/api/auth/google-register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(userData),
     credentials: "include",
+    body: JSON.stringify(userData),
   });
   
   if (!response.ok) {
@@ -152,12 +156,12 @@ export async function logoutUser() {
     await signOut(auth);
     // request backend to delete the server session
     try {
+      // call FE edge route to clear mirrored cookie and notify backend
       await fetch('/api/auth/session', {
         method: 'DELETE',
         credentials: 'include',
       });
     } catch (e) {
-      // ignore FE route errors but log for debugging
       console.error('FE session delete failed:', e);
     }
     if (typeof window !== 'undefined') {
@@ -208,53 +212,66 @@ export async function forceLogout() {
 // Lưu session vào backend
 export async function saveSession(idToken: string) {
   logDev('Saving session with token:', idToken.substring(0, 20) + '...');
-  
-    const response = await fetch('/api/auth/session', {
+  // Prefer calling FE edge route which will mirror backend Set-Cookie into FE cookie store
+  // If NEXT_PUBLIC_API_URL is not set (or edge route fails), fall back to direct backend call
+  const edgeUrl = '/api/auth/session';
+  let response: Response | null = null;
+
+  try {
+    response = await fetch(edgeUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ idToken }),
       credentials: 'include',
     });
+  } catch (e) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('FE edge session route failed, falling back to backend:', e);
+    }
+  }
+
+  if (!response || !response.ok) {
+    // fallback to direct backend if API_BASE_URL provided
+    if (API_BASE_URL) {
+      try {
+        response = await fetch(`${API_BASE_URL}/api/auth/session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken }),
+          credentials: 'include',
+        });
+      } catch (e) {
+        console.error('Direct backend save session failed:', e);
+        throw new Error('Failed to save session (network)');
+      }
+    }
+  }
   
+  if (!response) throw new Error('Save session failed: no response');
+
   logDev('Save session response status:', response.status);
-  
+
   if (!response.ok) {
-    const errorText = await response.text();
+    const errorText = await response.text().catch(() => '');
     console.error('Save session failed:', errorText);
-    throw new Error("Failed to save session");
+    throw new Error(errorText || "Failed to save session");
   }
   
   const result = await response.json();
   logDev('Session saved successfully:', result);
+
+  const result = await response.json().catch(() => ({}));
+  console.log('Session saved successfully:', result);
   return result;
 }
 
 // Verify token và lấy thông tin user từ backend
 export async function verifyToken() {
   try {
-    // Lấy Firebase token nếu user đã đăng nhập
-    let headers: HeadersInit = {};
-
-    logDev('VerifyToken: Starting verification...');
-    logDev('VerifyToken: auth.currentUser:', !!auth.currentUser);
-
-    if (auth.currentUser) {
-      try {
-        const token = await auth.currentUser.getIdToken();
-        headers['Authorization'] = `Bearer ${token}`;
-        logDev('VerifyToken: Got Firebase token, length:', token.length);
-      } catch (tokenError) {
-        logDev('VerifyToken: Could not get Firebase token:', tokenError);
-        // Tiếp tục mà không có token, có thể dựa vào cookie
-      }
-    } else {
-      logDev('VerifyToken: No Firebase user logged in');
-    }
-
-    logDev('VerifyToken: Making request to backend...');
-    const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
+    logDev('VerifyToken: Starting verification (cookie-based)...');
+    const url = API_BASE_URL ? `${API_BASE_URL}/api/auth/verify` : '/api/auth/verify';
+    const response = await fetch(url, {
       method: "GET",
-      headers,
       credentials: "include",
     });
 
@@ -273,7 +290,6 @@ export async function verifyToken() {
     logDev('VerifyToken: Success, got user:', !!result.user);
     return result;
   } catch (networkError) {
-    // Handle network errors gracefully
     if (networkError instanceof TypeError && networkError.message.includes('fetch')) {
       throw new Error("Network error - cannot reach authentication server");
     }
@@ -281,35 +297,15 @@ export async function verifyToken() {
   }
 }
 
-// Lấy thông tin dashboard từ backend
-export async function getDashboardData() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/dashboard`, {
-      method: "GET",
-      credentials: "include",
-    });
-    if (!response.ok) {
-      throw new Error("Failed to fetch dashboard data");
-    }
-    return response.json();
-  } catch (error) {
-    console.error("Dashboard fetch error:", error);
-    throw error;
-  }
-}
-
 // Sync user với database
 export async function syncUserToDatabase(firebaseUser: User) {
   try {
     logDev('Syncing user to database:', firebaseUser.uid);
-    const token = await firebaseUser.getIdToken();
-    logDev('Got Firebase token for sync');
-    
-  const response = await fetchWithAuth('/api/auth/sync-user', {
+    // fetchWithAuth will attach Authorization header when client Firebase token exists
+    const response = await fetchWithAuth('/api/auth/sync-user', {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
       },
       credentials: "include",
       body: JSON.stringify({
