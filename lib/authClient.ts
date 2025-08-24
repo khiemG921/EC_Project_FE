@@ -7,7 +7,7 @@ import {
 } from "firebase/auth";
 import { auth } from "./firebase";
 
-const API_BASE_URL: string = ((globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '');
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || '');
 
 import fetchWithAuth from '@/lib/apiClient';
 import { clearAuthTokens } from './authUtils';
@@ -105,28 +105,20 @@ export async function loginWithGoogle() {
 
   try {
     // Thử verify token trước
-    await saveSession(idToken);
-    try {
-      const userData = await verifyToken(idToken);
-      if (!userData || !userData.user) {
-        await registerGoogleUser({
-          email: user.email!,
-          name: user.displayName || user.email!,
-          avatar: user.photoURL || '',
-          firebaseId: user.uid
-        });
-        await saveSession(idToken);
-        await verifyToken(idToken);
-      }
-    } catch (verifyErr) {
+  await saveSession(idToken);
+  const userData = await verifyToken(idToken);
+    
+    if (!userData || !userData.user) {
+      // User chưa có trong database, tạo mới
       await registerGoogleUser({
         email: user.email!,
         name: user.displayName || user.email!,
         avatar: user.photoURL || '',
         firebaseId: user.uid
       });
+      
+      // Lưu session lại sau khi tạo user
       await saveSession(idToken);
-      await verifyToken(idToken);
     }
   } catch (error) {
     console.error('Google login error:', error);
@@ -233,7 +225,7 @@ export async function saveSession(idToken: string) {
       credentials: 'include',
     });
   } catch (e) {
-  if (((globalThis as any)?.process?.env?.NODE_ENV) === 'development') {
+    if (process.env.NODE_ENV === 'development') {
       console.warn('FE edge session route failed, falling back to backend:', e);
     }
   }
@@ -272,12 +264,30 @@ export async function saveSession(idToken: string) {
 export async function verifyToken(passedIdToken?: string) {
   try {
     logDev('VerifyToken: Starting verification...');
-    const url = '/api/auth/verify';
+    const url = API_BASE_URL ? `${API_BASE_URL}/api/auth/verify` : '/api/auth/verify';
 
-    // Using shared helper will attach Authorization (and refresh/retry on 401)
-    const headers: HeadersInit = {};
-    if (passedIdToken) headers['Authorization'] = `Bearer ${passedIdToken}`;
-    const response = await fetchWithAuth(url, { method: 'GET', headers, credentials: 'include' });
+    const doRequest = async (tokenForHeader?: string) => {
+      const headers: HeadersInit = {};
+      if (tokenForHeader) headers['Authorization'] = `Bearer ${tokenForHeader}`;
+      const resp = await fetch(url, { method: 'GET', headers, credentials: 'include' });
+      return resp;
+    };
+
+    let tokenToUse = passedIdToken;
+    if (!tokenToUse && auth?.currentUser) {
+      try { tokenToUse = await auth.currentUser.getIdToken(); } catch {}
+      if (!tokenToUse) {
+        try { tokenToUse = await auth.currentUser.getIdToken(true); } catch {}
+      }
+    }
+
+    let response = await doRequest(tokenToUse);
+    if (response.status === 401 && auth?.currentUser) {
+      try {
+        const refreshed = await auth.currentUser.getIdToken(true);
+        response = await doRequest(refreshed);
+      } catch {}
+    }
 
     logDev('VerifyToken: Response status:', response.status);
 
@@ -287,15 +297,15 @@ export async function verifyToken(passedIdToken?: string) {
       if (response.status === 401) {
         throw new Error(errorData.error || 'No token provided');
       }
-      throw new Error('Failed to verify token');
+      throw new Error("Failed to verify token");
     }
 
     const result = await response.json();
     logDev('VerifyToken: Success, got user:', !!result.user);
     return result;
   } catch (networkError) {
-    if (networkError instanceof TypeError && (networkError as any).message?.includes('fetch')) {
-      throw new Error('Network error - cannot reach authentication server');
+    if (networkError instanceof TypeError && networkError.message.includes('fetch')) {
+      throw new Error("Network error - cannot reach authentication server");
     }
     throw networkError;
   }

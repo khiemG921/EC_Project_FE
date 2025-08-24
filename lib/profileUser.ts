@@ -4,6 +4,7 @@ export async function fetchProfile() {
   // Attempt to fetch both customer and tasker profiles concurrently and merge them.
   const endpoints = [
     { key: 'customer', path: '/api/profile/findCustomer' },
+    { key: 'tasker', path: '/api/profile/findTasker' },
   ];
 
   const results = await Promise.allSettled(endpoints.map(e => fetchWithAuth(e.path, { method: 'GET' })));
