@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import { auth } from '@/lib/firebase';
 import { fetchProfile, updateProfile, uploadAvatar} from '@/lib/profileUser';
 import { logoutUser, verifyToken } from '@/lib/authClient';
 
@@ -25,6 +26,10 @@ export function useUser() {
     let mounted = true;
     (async () => {
       setLoading(true);
+      const hasCookieToken = () => typeof document !== 'undefined' && document.cookie.includes('token=');
+      for (let i = 0; i < 3 && !auth?.currentUser && !hasCookieToken(); i++) {
+        await new Promise(r => setTimeout(r, 150));
+      }
       try {
         const verified = await verifyToken().catch(() => null);
         if (mounted && verified && verified.user) {

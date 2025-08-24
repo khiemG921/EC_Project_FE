@@ -9,6 +9,16 @@ async function getIdTokenMaybe(refresh = false): Promise<string | undefined> {
       return await auth.currentUser.getIdToken(refresh);
     }
   } catch {}
+  try {
+    if (typeof document !== 'undefined') {
+      const cookie = document.cookie || '';
+      const match = cookie.split(';').map(s => s.trim()).find(s => s.startsWith('token='));
+      if (match) {
+        const val = match.split('=')[1];
+        if (val && val !== 'undefined' && val !== 'null') return val;
+      }
+    }
+  } catch {}
   return undefined;
 }
 
