@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { logDev } from '@/lib/utils';
+import fetchWithAuth from '@/lib/apiClient';
 
 // Types - Simplified without max_uses/current_uses
 interface Voucher {
@@ -58,9 +59,7 @@ const VoucherManagementPage = () => {
       const url = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/vouchers?${params}`;
       logDev('🔍 Fetching vouchers from:', url);
 
-      const response = await fetch(url, {
-        credentials: 'include' // Dùng cookie session
-      });
+      const response = await fetchWithAuth(url);
 
       logDev('📡 Response status:', response.status);
 
@@ -84,9 +83,7 @@ const VoucherManagementPage = () => {
       const url = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/vouchers/stats`;
       logDev('🔍 Fetching stats from:', url);
 
-      const response = await fetch(url, {
-        credentials: 'include'
-      });
+      const response = await fetchWithAuth(url);
 
       if (response.ok) {
         const data = await response.json();
@@ -153,12 +150,11 @@ const VoucherManagementPage = () => {
 
       logDev(`🚀 ${method} voucher:`, formData);
 
-      const response = await fetch(url, {
+      const response = await fetchWithAuth(url, {
         method,
         headers: { 
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify(formData)
       });
 
