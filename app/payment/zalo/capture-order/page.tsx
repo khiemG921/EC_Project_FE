@@ -32,8 +32,8 @@ function ZaloCaptureOrderContent() {
                     `${process.env.NEXT_PUBLIC_API_URL}/api/transaction/create`,
                     {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
+                        // headers: { 'Content-Type': 'application/json' },
+                        // credentials: 'include',
                         body: JSON.stringify({
                             transactionId: zpTransToken,
                             jobId: jobId,
