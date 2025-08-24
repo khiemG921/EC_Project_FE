@@ -26,6 +26,7 @@ import {
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import fetchWithAuth from '@/lib/apiClient';
 
 // --- TYPES AND FETCH DATA ---
 
@@ -429,7 +430,7 @@ const AdminBookingManagementPage = () => {
             setIsLoading(true);
             try {
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-                const res = await fetch(`${apiUrl}/api/admin/jobs`, {
+                const res = await fetchWithAuth(`/api/admin/jobs`, {
                     credentials: 'include',
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
