@@ -200,7 +200,7 @@ const VoucherManagementPage = () => {
     try {
       logDev(`🗑️ Deleting voucher: ${voucher_code}`);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/vouchers/${voucher_code}`, {
+      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/vouchers/${voucher_code}`, {
         method: 'DELETE',
         credentials: 'include'
       });
