@@ -153,32 +153,26 @@ function CancellationModal({
     const handleFinalConfirm = async () => {
         const finalReason = reason === 'Lý do khác' ? otherReason : reason;
         try {
-            let res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/job/cancel/${job.job_id}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ reason: finalReason }),
-                }
-            );
+            let res = await import('@/lib/apiClient').then(m => m.fetchWithAuth(`/api/job/cancel/${job.job_id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason: finalReason }),
+            }));
+            console.debug('Cancel job response status:', res.status);
             if (!res.ok) {
                 throw new Error(`Cancel failed with status ${res.status}`);
             }
 
-            res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/customer/refund`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        customer_id: job.customer_id,
-                        amount: refund,
-                        currency: job.currency,
-                    }),
-                }
-            );
+            res = await import('@/lib/apiClient').then(m => m.fetchWithAuth(`/api/customer/refund`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    customer_id: job.customer_id,
+                    amount: refund,
+                    currency: job.currency,
+                }),
+            }));
+            console.debug('Refund response status:', res.status);
 
             if (!res.ok) {
                 throw new Error(`Refund failed with status ${res.status}`);

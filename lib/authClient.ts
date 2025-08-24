@@ -224,6 +224,7 @@ export async function saveSession(idToken: string) {
       body: JSON.stringify({ idToken }),
       credentials: 'include',
     });
+    try { console.debug('[saveSession] FE edge POST status:', response.status); } catch {}
   } catch (e) {
     if (process.env.NODE_ENV === 'development') {
       console.warn('FE edge session route failed, falling back to backend:', e);
@@ -238,6 +239,7 @@ export async function saveSession(idToken: string) {
         body: JSON.stringify({ idToken }),
         credentials: 'include',
       });
+      try { console.debug('[saveSession] Backend POST status:', backendResponse.status); } catch {}
     } catch (e) {
       console.warn('Direct backend save session failed (non-fatal):', e);
     }
@@ -270,6 +272,10 @@ export async function verifyToken(passedIdToken?: string) {
       const headers: HeadersInit = {};
       if (tokenForHeader) headers['Authorization'] = `Bearer ${tokenForHeader}`;
       const resp = await fetch(url, { method: 'GET', headers, credentials: 'include' });
+      try {
+        const authPrev = headers['Authorization'] ? String(headers['Authorization']).slice(0, 27) + '...' : 'none';
+        console.debug('[verifyToken] GET', url, 'status:', resp.status, 'auth:', authPrev);
+      } catch {}
       return resp;
     };
 

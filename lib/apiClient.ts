@@ -40,6 +40,14 @@ export async function fetchWithAuth(pathOrUrl: string, init: RequestInit = {}) {
   const token = await getIdTokenMaybe(false);
   if (!hadAuthHeader && token) headers.set('Authorization', `Bearer ${token}`);
 
+  try {
+    const method = (init.method || 'GET').toUpperCase();
+    const authPreview = headers.get('Authorization') ? 'Bearer ' + String(headers.get('Authorization')).slice(7, 27) + '...' : 'none';
+    console.debug('[fetchWithAuth] ->', method, url, { hadAuthHeader, auth: authPreview });
+  } catch {
+    // ignore logging failures
+  }
+
   // Set JSON content-type by default when body present and not FormData
   if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
@@ -50,6 +58,7 @@ export async function fetchWithAuth(pathOrUrl: string, init: RequestInit = {}) {
     headers,
     credentials: init.credentials ?? 'include',
   });
+  try { console.debug('[fetchWithAuth] <-', url, 'status:', res.status); } catch {}
 
   // If unauthorized, try refresh token once and retry
   if (res.status === 401) {
@@ -58,6 +67,7 @@ export async function fetchWithAuth(pathOrUrl: string, init: RequestInit = {}) {
       if (refreshed && !hadAuthHeader) {
         headers.set('Authorization', `Bearer ${refreshed}`);
         res = await fetch(url, { ...init, headers, credentials: init.credentials ?? 'include' });
+        try { console.debug('[fetchWithAuth][retry] <-', url, 'status:', res.status); } catch {}
       }
     } catch {}
   }
