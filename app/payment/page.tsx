@@ -39,7 +39,7 @@ export default function PaymentPage() {
         useState<string>('');
     const [isPaypalReady, setIsPaypalReady] = useState(false);
     const paypalRenderedRef = useRef(false);
-    const paypalClientId = 'AQIUrFmVyy0T596eCylzxGDqVW3Q5KAT3cowVCe6vC2BPmpkPuhZAJKp6a4RiHpuPE2MBqctCILsWs9U';
+    const paypalClientId =  process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
 
     const { user, logoutUser, loading } = useUser();
     const router = useRouter();
@@ -226,6 +226,7 @@ export default function PaymentPage() {
                         },
                     })
                     .render('#paypal-button-container');
+                paypalRenderedRef.current = true;
             } else if (window.paypal && paypalRenderedRef.current) {
                 Swal.fire({
                     text: 'PayPal SDK đã được render rồi.',
