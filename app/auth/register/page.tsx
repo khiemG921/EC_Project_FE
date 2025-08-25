@@ -5,6 +5,75 @@ import { useRouter } from 'next/navigation';
 import { registerUser, verifyRegisterCode } from "@/lib/authClient";
 import OtpInput from '@/components/common/OtpInput';
 
+// --- COMPONENT MODAL CHÍNH SÁCH ---
+const PolicyModal = ({ initialTab, onClose }: { initialTab: 'terms' | 'privacy', onClose: () => void }) => {
+    const [activeTab, setActiveTab] = useState(initialTab);
+
+    return (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-white rounded-2xl w-full max-w-3xl h-[90vh] flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                <header className="flex items-center justify-between p-4 border-b border-slate-200 shrink-0">
+                    <h2 className="text-lg font-bold text-slate-800">Điều khoản & Chính sách</h2>
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-slate-100 text-slate-500"><X size={20} /></button>
+                </header>
+                <div className="border-b border-slate-200 shrink-0">
+                    <nav className="flex space-x-4 px-4">
+                        <button onClick={() => setActiveTab('terms')} className={`py-3 px-1 text-sm font-semibold border-b-2 ${activeTab === 'terms' ? 'border-teal-500 text-teal-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>Điều khoản Dịch vụ</button>
+                        <button onClick={() => setActiveTab('privacy')} className={`py-3 px-1 text-sm font-semibold border-b-2 ${activeTab === 'privacy' ? 'border-teal-500 text-teal-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>Chính sách Bảo mật</button>
+                    </nav>
+                </div>
+                <div className="overflow-y-auto p-6 prose prose-slate max-w-none">
+                    {activeTab === 'terms' ? (
+                        <>
+                            <h3>Điều khoản Dịch vụ của cleanNow</h3>
+                            <p className="text-sm text-slate-500">Cập nhật lần cuối: 25/08/2025</p>
+                            <p>Chào mừng bạn đến với cleanNow! Bằng việc sử dụng ứng dụng và dịch vụ của chúng tôi, bạn đồng ý tuân thủ các điều khoản và điều kiện dưới đây.</p>
+                            <h4>1. Phạm vi Dịch vụ</h4>
+                            <p>cleanNow là một nền tảng công nghệ kết nối Khách hàng có nhu cầu dọn dẹp, vệ sinh nhà cửa với các Đối tác (Tasker) cung cấp dịch vụ. Chúng tôi không trực tiếp thực hiện công việc dọn dẹp mà chỉ đóng vai trò trung gian.</p>
+                            <h4>2. Tài khoản Người dùng</h4>
+                            <ul>
+                                <li>Bạn cam kết cung cấp thông tin chính xác, đầy đủ khi đăng ký tài khoản.</li>
+                                <li>Bạn có trách nhiệm bảo mật thông tin đăng nhập (mật khẩu, email) và hoàn toàn chịu trách nhiệm cho các hoạt động diễn ra từ tài khoản của mình.</li>
+                            </ul>
+                             <h4>3. Hành vi của Người dùng</h4>
+                            <p>Bạn đồng ý không sử dụng dịch vụ cho các mục đích bất hợp pháp hoặc bị cấm bởi các điều khoản này. Bạn không được gây rối, lạm dụng, hoặc làm hại đến bất kỳ người dùng nào khác hoặc chính nền tảng.</p>
+                            <h4>4. Sở hữu Trí tuệ</h4>
+                            <p>Tất cả nội dung, logo, và các tài sản trí tuệ khác trên nền tảng cleanNow là tài sản của chúng tôi hoặc các bên cấp phép của chúng tôi. Bạn không được phép sao chép, phân phối hoặc tạo ra các sản phẩm phái sinh mà không có sự cho phép rõ ràng của chúng tôi.</p>
+                            <h4>5. Chấm dứt tài khoản</h4>
+                            <p>Chúng tôi có quyền tạm ngưng hoặc chấm dứt tài khoản của bạn bất kỳ lúc nào nếu bạn vi phạm các điều khoản này, mà không cần thông báo trước.</p>
+                            <h4>6. Thay đổi Điều khoản</h4>
+                            <p>Chúng tôi có thể sửa đổi các điều khoản này theo thời gian. Phiên bản mới nhất sẽ luôn được đăng tải trên trang web và ứng dụng của chúng tôi. Việc bạn tiếp tục sử dụng dịch vụ sau khi các thay đổi có hiệu lực đồng nghĩa với việc bạn chấp nhận các điều khoản mới.</p>
+                        </>
+                    ) : (
+                        <>
+                            <h3>Chính sách Bảo mật của cleanNow</h3>
+                            <p className="text-sm text-slate-500">Cập nhật lần cuối: 25/08/2025</p>
+                            <p>cleanNow cam kết bảo vệ quyền riêng tư của bạn. Chính sách này giải thích cách chúng tôi thu thập, sử dụng và bảo vệ thông tin cá nhân của bạn.</p>
+                            <h4>1. Thông tin chúng tôi thu thập</h4>
+                            <ul>
+                                <li><strong>Thông tin bạn cung cấp:</strong> Họ tên, email, số điện thoại, địa chỉ, thông tin thanh toán khi bạn đăng ký và sử dụng dịch vụ.</li>
+                                <li><strong>Thông tin sử dụng:</strong> Dữ liệu về cách bạn tương tác với ứng dụng, lịch sử đặt dịch vụ, đánh giá.</li>
+                                <li><strong>Thông tin kỹ thuật:</strong> Địa chỉ IP, loại trình duyệt, hệ điều hành, và các thông tin kỹ thuật khác được thu thập tự động.</li>
+                            </ul>
+                            <h4>2. Cách chúng tôi sử dụng thông tin</h4>
+                            <p>Thông tin của bạn được dùng để cung cấp và cải thiện dịch vụ, liên lạc với bạn về đơn đặt hàng và các chương trình khuyến mãi, cũng như để đảm bảo an toàn và an ninh cho nền tảng.</p>
+                            <h4>3. Bảo mật Dữ liệu</h4>
+                            <p>Chúng tôi áp dụng các biện pháp bảo mật vật lý, điện tử và thủ tục hợp lý để bảo vệ thông tin cá nhân của bạn. Tuy nhiên, không có phương thức truyền tải qua Internet hoặc lưu trữ điện tử nào là an toàn 100%.</p>
+                            <h4>4. Lưu trữ Dữ liệu</h4>
+                            <p>Chúng tôi sẽ lưu trữ thông tin cá nhân của bạn trong khoảng thời gian cần thiết để thực hiện các mục đích được nêu trong chính sách này, trừ khi pháp luật yêu cầu hoặc cho phép một khoảng thời gian lưu trữ dài hơn.</p>
+                            <h4>5. Quyền riêng tư của trẻ em</h4>
+                            <p>Dịch vụ của chúng tôi không dành cho người dưới 18 tuổi. Chúng tôi không cố ý thu thập thông tin cá nhân từ trẻ em dưới 18 tuổi.</p>
+                            <h4>6. Liên hệ</h4>
+                            <p>Nếu bạn có bất kỳ câu hỏi nào về Chính sách Bảo mật này, vui lòng liên hệ với chúng tôi qua email: support@cleannow.com.</p>
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
 const RegisterPage = () => {
     const [termsAccepted, setTermsAccepted] = useState(false);
     const router = useRouter();
