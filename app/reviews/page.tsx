@@ -140,15 +140,7 @@ const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '
 
     setIsSubmitting(true);
     
-    const resolvedCustomerId = Number((user as any)?.customer_id ?? (user as any)?.id);
-    if (!Number.isFinite(resolvedCustomerId) || resolvedCustomerId <= 0) {
-      setIsSubmitting(false);
-      setModalMessage('Không xác định được tài khoản khách hàng. Vui lòng đăng nhập lại.');
-      return;
-    }
-
-    const newReviewData = {
-      customer_id: resolvedCustomerId,
+  const newReviewData = {
       // Không gửi job_id để tránh lỗi FK; hỗ trợ review công khai
       service_id: parseInt(serviceId as string, 10),
       rating_job: reviewRating,
@@ -173,11 +165,12 @@ const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '
 
         const result = await response.json();
         const createdReview: Review = {
+          customer_id: Number((user as any)?.customer_id ?? (user as any)?.id) || 0,
           ...newReviewData,
           review_id: result.review_id || Date.now(),
           job_id: null, // not used in UI
           Customer: {
-            customer_id: resolvedCustomerId,
+            customer_id: Number((user as any)?.customer_id ?? (user as any)?.id) || 0,
             name: user.name || 'Khách hàng',
             avatar_url: user.avatar_url || user.avatar || 'https://placehold.co/48x48/f4f4f4/000000?text=C',
           },
