@@ -23,6 +23,7 @@ import { useUser } from '@/hooks/useUser';
 import { Button } from '@/components/ui/button';
 import { logDev } from '@/lib/utils';
 import fetchWithAuth from '@/lib/apiClient';
+import Swal from 'sweetalert2';
 
 const createdJobs: any[] = [];
 
@@ -674,7 +675,15 @@ const BookingHistoryPage = () => {
 
     // Gọi API confirm hoàn thành
     const handleConfirmCompletion = async (jobId: number) => {
-        if (!window.confirm(`Xác nhận hoàn thành đơn #${jobId}?`)) return;
+        const result = await Swal.fire({
+            title: 'Xác nhận hoàn thành',
+            text: `Xác nhận hoàn thành đơn #${jobId}?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Đồng ý',
+            cancelButtonText: 'Hủy'
+        });
+        if (!result.isConfirmed) return;
         const res = await fetchWithAuth(`/api/job/customer/confirm/${jobId}`, {
             method: 'POST',
             credentials: 'include',
@@ -688,7 +697,11 @@ const BookingHistoryPage = () => {
                 )
             );
         } else {
-            alert('Xác nhận hoàn thành thất bại');
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: 'Xác nhận hoàn thành thất bại',
+            });
         }
     };
 
