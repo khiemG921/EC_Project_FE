@@ -106,7 +106,10 @@ export async function loginWithGoogle() {
   try {
     // Thử verify token trước
   await saveSession(idToken);
-  const userData = await verifyToken(idToken);
+  let userData = await verifyToken(idToken).catch(() => null);
+  if (!userData || !userData.user) {
+    userData = await verifyToken(undefined, { force: true }).catch(() => null);
+  }
     
     if (!userData || !userData.user) {
       // User chưa có trong database, tạo mới
@@ -117,8 +120,9 @@ export async function loginWithGoogle() {
         firebaseId: user.uid
       });
       
-      // Lưu session lại sau khi tạo user
-      await saveSession(idToken);
+  // Lưu session lại sau khi tạo user
+  await saveSession(idToken);
+  await verifyToken(undefined, { force: true }).catch(() => null);
     }
   } catch (error) {
     console.error('Google login error:', error);
@@ -270,7 +274,8 @@ let __lastVerifyResult: any | null = null;
 export async function verifyToken(passedIdToken?: string, opts?: { force?: boolean }) {
   try {
     logDev('VerifyToken: Starting verification...');
-    const url = API_BASE_URL ? `${API_BASE_URL}/api/auth/verify` : '/api/auth/verify';
+  const urlBackend = API_BASE_URL ? `${API_BASE_URL}/api/auth/verify` : '';
+  const urlEdge = '/api/auth/verify';
 
     // Coalesce concurrent calls and throttle if recently verified
     if (!opts?.force && !passedIdToken) {
@@ -288,8 +293,22 @@ export async function verifyToken(passedIdToken?: string, opts?: { force?: boole
     const doRequest = async (tokenForHeader?: string, bust?: boolean) => {
       const headers: HeadersInit = {};
       if (tokenForHeader) headers['Authorization'] = `Bearer ${tokenForHeader}`;
-      const finalUrl = bust ? `${url}${url.includes('?') ? '&' : '?'}_ts=${Date.now()}` : url;
-      const resp = await fetch(finalUrl, { method: 'GET', headers, credentials: 'include', cache: 'no-store' });
+      // Try backend first if configured, else use edge; fallback on 404/Network
+      const target = urlBackend || urlEdge;
+      const finalUrl = bust ? `${target}${target.includes('?') ? '&' : '?'}_ts=${Date.now()}` : target;
+      let resp: Response;
+      try {
+        resp = await fetch(finalUrl, { method: 'GET', headers, credentials: 'include', cache: 'no-store' });
+        if (resp.status === 404 && target === urlBackend) {
+          // Fallback to edge
+          const edgeUrl = bust ? `${urlEdge}?_ts=${Date.now()}` : urlEdge;
+          resp = await fetch(edgeUrl, { method: 'GET', headers, credentials: 'include', cache: 'no-store' });
+        }
+      } catch (e) {
+        // Network issue, try edge as last resort
+        const edgeUrl = bust ? `${urlEdge}?_ts=${Date.now()}` : urlEdge;
+        resp = await fetch(edgeUrl, { method: 'GET', headers, credentials: 'include', cache: 'no-store' });
+      }
       try {
         const authPrev = headers['Authorization'] ? String(headers['Authorization']).slice(0, 27) + '...' : 'none';
         console.debug('[verifyToken] GET', finalUrl, 'status:', resp.status, 'auth:', authPrev);

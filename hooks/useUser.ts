@@ -39,13 +39,20 @@ export function useUser() {
         if (verified && verified.user) {
           const vuser = verified.user || {};
           const roles = Array.isArray(vuser.roles) ? vuser.roles : [vuser.roles || 'customer'];
+          const rewardPoints = typeof vuser.rewardPoints === 'number'
+            ? vuser.rewardPoints
+            : (typeof vuser.reward_points === 'number' ? vuser.reward_points : Number(vuser.reward_points || 0));
+          const id = vuser.id ?? vuser.customer_id ?? vuser.user_id;
           setUser({
             ...vuser,
+            id,
             roles,
             avatar: vuser.avatar,
             dob: vuser.date_of_birth || vuser.dob || undefined,
             gender: vuser.gender || undefined,
             address: vuser.address || undefined,
+            rewardPoints,
+            reward_points: rewardPoints,
           });
         } else {
           setUser(null);
