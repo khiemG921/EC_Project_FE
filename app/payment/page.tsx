@@ -39,7 +39,7 @@ export default function PaymentPage() {
         useState<string>('');
     const [isPaypalReady, setIsPaypalReady] = useState(false);
     const paypalRenderedRef = useRef(false);
-    const paypalClientId = (globalThis as any)?.process?.env?.NEXT_PUBLIC_PAYPAL_CLIENT_ID as string | undefined;
+    const paypalClientId = (globalThis as any)?.process?.env?.NEXT_PUBLIC_PAYPAL_CLIENT_ID as string | 'AQIUrFmVyy0T596eCylzxGDqVW3Q5KAT3cowVCe6vC2BPmpkPuhZAJKp6a4RiHpuPE2MBqctCILsWs9U';
 
     const { user, logoutUser, loading } = useUser();
     const router = useRouter();
