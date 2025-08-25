@@ -167,21 +167,31 @@ const FindJobsPage = () => {
         }
     };
 
-    // Complete job: mock first; if backend exists, use it, else fallback to local state update
+    // Hoàn thành công việc
     const completeJob = async (jobId: number) => {
         setActionState({ type: 'completing', id: jobId });
         let done = false;
         try {
-            const res = await fetchWithAuth(`/api/tasker/jobs/${jobId}/complete`, { method: 'POST' });
-            if (res.ok) {
-                done = true;
-            }
-        } catch (e) {
-            // ignore, will fallback to mock
+        // gọi đúng API /job/tasker/complete/:id
+        const res = await fetchWithAuth(
+            `/api/job/tasker/complete/${jobId}`,
+            { method: 'POST', credentials: 'include' }
+        );
+        if (res.ok) {
+            done = true;
         }
-        // Fallback mock (or also run when backend succeeded to update UI immediately)
+        } catch (e) {
+        console.error('Error completing job:', e);
+        }
+        // dù thành công hay không, cập nhật UI ngay
         await new Promise(r => setTimeout(r, 600));
-        setJobs(prev => prev.map(j => j.job_id === jobId ? { ...j, status: 'completed', completed_at: new Date().toISOString() } : j));
+        setJobs(prev =>
+        prev.map(j =>
+            j.job_id === jobId
+            ? { ...j, status: 'completed', completed_at: new Date().toISOString() }
+            : j
+        )
+        );
         setActionState({ type: null, id: null });
     };
 

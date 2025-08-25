@@ -52,10 +52,15 @@ function CancellationModal({
     }, [isOpen]);
 
     useEffect(() => {
-        const tx = (job as any)?.transaction || (Array.isArray((job as any)?.transactions) ? (job as any).transactions[0] : undefined);
+        const tx =
+            (job as any)?.transaction ||
+            (Array.isArray((job as any)?.transactions)
+                ? (job as any).transactions[0]
+                : undefined);
         const currency = tx?.currency ?? job?.currency;
         if (isOpen && currency === 'USD') {
-            const exKey = (globalThis as any)?.process?.env?.NEXT_PUBLIC_EXCHANGE_RATE_API_KEY;
+            const exKey = (globalThis as any)?.process?.env
+                ?.NEXT_PUBLIC_EXCHANGE_RATE_API_KEY;
             fetch(`https://v6.exchangerate-api.com/v6/${exKey}/pair/USD/VND`)
                 .then((r) => r.json())
                 .then((data) => {
@@ -70,7 +75,7 @@ function CancellationModal({
     }, [isOpen, job]);
 
     // Logic tính phí hủy và hoàn tiền
-    const { finalPrice, refund, feeDetails, policyMessage } = useMemo( () => {
+    const { finalPrice, refund, feeDetails, policyMessage } = useMemo(() => {
         if (step !== 3 || !job) {
             return {
                 finalPrice: 0,
@@ -88,15 +93,25 @@ function CancellationModal({
             (1000 * 60 * 60);
 
         // Lấy amount/currency từ transaction nếu có, fallback về job
-        const tx = (job as any).transaction || (Array.isArray((job as any).transactions) ? (job as any).transactions[0] : undefined);
+        const tx =
+            (job as any).transaction ||
+            (Array.isArray((job as any).transactions)
+                ? (job as any).transactions[0]
+                : undefined);
         const rawAmount = tx?.amount ?? (job as any).amount ?? job.price ?? 0;
         const currency = tx?.currency ?? job.currency ?? 'VND';
-        const amountNum = typeof rawAmount === 'string' ? parseFloat(rawAmount) : Number(rawAmount);
+        const amountNum =
+            typeof rawAmount === 'string'
+                ? parseFloat(rawAmount)
+                : Number(rawAmount);
 
         // Quy đổi sang VND nếu USD để áp dụng chính sách tính phí theo VND
-        const basePrice: number = currency === 'USD' ? Number((amountNum * exchangeRate).toFixed(0)) : amountNum;
-        
-            let _fee = 0;
+        const basePrice: number =
+            currency === 'USD'
+                ? Number((amountNum * exchangeRate).toFixed(0))
+                : amountNum;
+
+        let _fee = 0;
         let _refund = 0;
         let _policyMessage = '';
         const _feeDetails: { label: string; value: number }[] = [];
@@ -157,29 +172,39 @@ function CancellationModal({
             setStep(3); // Chuyển đến bước xác nhận chính sách
         }
     };
-    
+
     const handleFinalConfirm = async () => {
         const finalReason = reason === 'Lý do khác' ? otherReason : reason;
         try {
-            let res = await import('@/lib/apiClient').then(m => m.fetchWithAuth(`/api/job/cancel/${job.job_id}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reason: finalReason }),
-            }));
+            let res = await import('@/lib/apiClient').then((m) =>
+                m.fetchWithAuth(`/api/job/cancel/${job.job_id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason: finalReason }),
+                })
+            );
             console.debug('Cancel job response status:', res.status);
             if (!res.ok) {
                 throw new Error(`Cancel failed with status ${res.status}`);
             }
 
-        res = await import('@/lib/apiClient').then(m => m.fetchWithAuth(`/api/customer/refund`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    customer_id: job.customer_id,
-                    amount: refund,
-            currency: ((job as any).transaction || (Array.isArray((job as any).transactions) ? (job as any).transactions[0] : undefined))?.currency ?? job.currency,
-                }),
-            }));
+            res = await import('@/lib/apiClient').then((m) =>
+                m.fetchWithAuth(`/api/customer/refund`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        customer_id: job.customer_id,
+                        amount: refund,
+                        currency:
+                            (
+                                (job as any).transaction ||
+                                (Array.isArray((job as any).transactions)
+                                    ? (job as any).transactions[0]
+                                    : undefined)
+                            )?.currency ?? job.currency,
+                    }),
+                })
+            );
             console.debug('Refund response status:', res.status);
 
             if (!res.ok) {
@@ -416,11 +441,19 @@ const StatusBadge = ({ status }: { status: string }) => {
     );
 };
 
-const JobCard: React.FC<{
-    job: (typeof createdJobs)[number];
+interface JobCardProps {
+    job: any;
     onCancel: (job: any) => void;
-}> = ({ job, onCancel }) => {
-    const { tasker, service, status } = job;
+    status: string;
+    onConfirmCompletion: (id: number) => void;
+}
+const JobCard: React.FC<JobCardProps> = ({
+    job,
+    onCancel,
+    status,
+    onConfirmCompletion,
+}) => {
+    const { tasker, service } = job;
     const renderActions = () => {
         switch (status) {
             case 'completed':
@@ -452,6 +485,13 @@ const JobCard: React.FC<{
                             className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
                         >
                             <XCircle size={16} /> Hủy đơn
+                        </button>
+                        <button
+                            onClick={() => onConfirmCompletion(job.job_id)}
+                            disabled={job.completed_at == null}
+                            className="flex-1 bg-green-500 hover:bg-green-600 text-white rounded-lg px-4 py-2 disabled:opacity-50"
+                        >
+                            Xác nhận hoàn thành
                         </button>
                     </>
                 );
@@ -535,11 +575,25 @@ const JobCard: React.FC<{
                         <Tag size={16} className="mt-0.5 shrink-0" />
                         <span>
                             {(() => {
-                                const tx = (job as any).transaction || (Array.isArray((job as any).transactions) ? (job as any).transactions[0] : undefined);
-                                const amount = tx?.amount ?? (job as any).amount ?? job.price ?? 0;
-                                const currency = tx?.currency ?? job.currency ?? 'VND';
-                                const amt = typeof amount === 'string' ? parseFloat(amount) : Number(amount);
-                                return currency === 'USD' ? `$${amt}` : `${amt.toLocaleString('vi-VN')}đ`;
+                                const tx =
+                                    (job as any).transaction ||
+                                    (Array.isArray((job as any).transactions)
+                                        ? (job as any).transactions[0]
+                                        : undefined);
+                                const amount =
+                                    tx?.amount ??
+                                    (job as any).amount ??
+                                    job.price ??
+                                    0;
+                                const currency =
+                                    tx?.currency ?? job.currency ?? 'VND';
+                                const amt =
+                                    typeof amount === 'string'
+                                        ? parseFloat(amount)
+                                        : Number(amount);
+                                return currency === 'USD'
+                                    ? `$${amt}`
+                                    : `${amt.toLocaleString('vi-VN')}đ`;
                             })()}
                         </span>
                     </div>
@@ -558,6 +612,7 @@ const BookingHistoryPage = () => {
         'ongoing'
     );
     const [jobs, setJobs] = useState<typeof createdJobs>([]);
+    const [statuses, setStatuses] = useState<Record<number, string>>({});
     const router = useRouter();
 
     // --- State cho modal hủy ---
@@ -587,6 +642,54 @@ const BookingHistoryPage = () => {
         return () => controller.abort();
     }, [loading, user?.id]);
 
+    // Khi jobs thay đổi thì fetch status từng job
+    useEffect(() => {
+        const controller = new AbortController();
+        async function loadStatuses() {
+            const s: Record<number, string> = {};
+            await Promise.all(
+                jobs.map(async (job) => {
+                    try {
+                        const res = await fetch(
+                            `${process.env.NEXT_PUBLIC_API_URL}/api/job/status/${job.job_id}`,
+                            {
+                                credentials: 'include',
+                                signal: controller.signal,
+                            }
+                        );
+                        const json = await res.json();
+                        s[job.job_id] = json.status;
+                    } catch {
+                        s[job.job_id] = job.status;
+                    }
+                })
+            );
+            setStatuses(s);
+        }
+        if (jobs.length) loadStatuses();
+        return () => controller.abort();
+    }, [jobs]);
+
+    // Gọi API confirm hoàn thành
+    const handleConfirmCompletion = async (jobId: number) => {
+        if (!window.confirm(`Xác nhận hoàn thành đơn #${jobId}?`)) return;
+        const res = await fetchWithAuth(`/api/job/customer/confirm/${jobId}`, {
+            method: 'POST',
+            credentials: 'include',
+        });
+        if (res.ok) {
+            // cập nhật UI local
+            setStatuses((prev) => ({ ...prev, [jobId]: 'completed' }));
+            setJobs((prev) =>
+                prev.map((j) =>
+                    j.job_id === jobId ? { ...j, status: 'completed' } : j
+                )
+            );
+        } else {
+            alert('Xác nhận hoàn thành thất bại');
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -598,8 +701,13 @@ const BookingHistoryPage = () => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
                 <div className="text-center">
-                    <p className="text-slate-600 mb-4">Vui lòng đăng nhập để xem lịch sử đặt hàng</p>
-                    <a href="/auth/login" className="bg-teal-500 text-white px-6 py-2 rounded-lg hover:bg-teal-600">
+                    <p className="text-slate-600 mb-4">
+                        Vui lòng đăng nhập để xem lịch sử đặt hàng
+                    </p>
+                    <a
+                        href="/auth/login"
+                        className="bg-teal-500 text-white px-6 py-2 rounded-lg hover:bg-teal-600"
+                    >
                         Đăng nhập
                     </a>
                 </div>
@@ -619,7 +727,7 @@ const BookingHistoryPage = () => {
 
     const handleConfirmCancellation = (jobId: number, reason: string) => {
         logDev(`Đã xác nhận hủy job ID: ${jobId} với lý do: "${reason}"`);
-        
+
         setJobs((prevJobs) =>
             prevJobs.map((job) =>
                 job.job_id === jobId ? { ...job, status: 'cancelled' } : job
@@ -663,6 +771,8 @@ const BookingHistoryPage = () => {
                         key={job.job_id}
                         job={job}
                         onCancel={handleOpenCancelModal}
+                        status={statuses[job.job_id] || job.status}
+                        onConfirmCompletion={handleConfirmCompletion}
                     />
                 ))}
             </div>
