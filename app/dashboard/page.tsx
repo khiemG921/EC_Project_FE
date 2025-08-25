@@ -12,7 +12,6 @@ import {
     taskerApplicationApi,
     TaskerApplication,
 } from '@/lib/taskerApplicationApi';
-import { userAgent } from 'next/server';
 import { fetchVoucherSummary } from '@/lib/vouchersApi';
 
 const initialDashboardData = {
@@ -71,14 +70,14 @@ const CustomerDashboardPage = () => {
     // Lấy reward points
     useEffect(() => {
         if (!user?.id) return;
-        const points = typeof (user as any).rewardPoints === 'number'
-            ? (user as any).rewardPoints
-            : Number((user as any).reward_points || 0);
+        const points =
+            typeof (user as any).rewardPoints === 'number'
+                ? (user as any).rewardPoints
+                : Number((user as any).reward_points || 0);
         setDashboardData((prev) => ({
             ...prev,
             walletBalance: points || 0,
         }));
-        
     }, [user?.id, (user as any)?.rewardPoints, (user as any)?.reward_points]);
 
     // Load voucher summary for count
@@ -90,14 +89,42 @@ const CustomerDashboardPage = () => {
             try {
                 const summary = await fetchVoucherSummary(controller.signal);
                 if (aborted) return;
-                const available = summary?.active ?? summary?.total ?? summary?.count ?? 0;
-                setDashboardData(prev => ({ ...prev, availableVouchers: Number(available) || 0 }));
+                const available =
+                    summary?.active ?? summary?.total ?? summary?.count ?? 0;
+                setDashboardData((prev) => ({
+                    ...prev,
+                    availableVouchers: Number(available) || 0,
+                }));
             } catch (e) {
                 // ignore
             }
         };
         run();
-        return () => { aborted = true; controller.abort(); };
+        return () => {
+            aborted = true;
+            controller.abort();
+        };
+    }, [user?.id]);
+
+    // Load pending jobs count
+    useEffect(() => {
+        if (!user?.id) return;
+        (async () => {
+            try {
+                const res = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/job/customer/count-pending`,
+                    { credentials: 'include' }
+                );
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const { count } = await res.json();
+                setDashboardData((prev) => ({
+                    ...prev,
+                    ongoingJobsCount: count,
+                }));
+            } catch (err) {
+                console.error('Failed to fetch pending jobs count:', err);
+            }
+        })();
     }, [user?.id]);
 
     // Kiểm tra trạng thái đơn đăng ký khi component mount

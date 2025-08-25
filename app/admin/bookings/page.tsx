@@ -664,16 +664,14 @@ const AdminBookingManagementPage = () => {
                                             )}
                                         </td>
                                         <td className="px-6 py-4 font-semibold text-gray-700">
-                                            {(
-                                                parseFloat(
-                                                    booking.amount?.toString() ||
-                                                        '0'
-                                                ) +
-                                                    parseFloat(
-                                                        booking.platform_fee?.toString() ||
-                                                            '0'
-                                                    ) || 0
-                                            ).toLocaleString('en-US')}
+                                            {(() => {
+                                                const total =
+                                                    parseFloat(booking.amount?.toString() || '0') +
+                                                    parseFloat(booking.platform_fee?.toString() || '0');
+                                                return booking.currency === 'USD'
+                                                    ? `$${total.toLocaleString('en-US')}`
+                                                    : `${total.toLocaleString('en-US')}đ`;
+                                            })()}
                                         </td>
                                         <td className="px-6 py-4">
                                             {booking.created_at
