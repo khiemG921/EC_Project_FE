@@ -199,6 +199,7 @@ const ConfirmStep = () => {
                             bookingData.extraServices.length > 0
                                 ? bookingData.extraServices.join(',')
                                 : null,
+                        location: bookingData.address, // hoặc toạ độ
                         description:
                             checkoutResult && checkoutResult.breakdown
                                 ? '(' +
@@ -208,7 +209,6 @@ const ConfirmStep = () => {
                                   ')' +
                                   ` x ${bookingData.hoursPerSession} x ${bookingData.sessionsPerWeek} x ${bookingData.packageDuration} tháng`
                                 : '',
-                        location: bookingData.address, // hoặc toạ độ
                     }),
                 }
             );
@@ -218,7 +218,7 @@ const ConfirmStep = () => {
             localStorage.setItem(
                 'paymentInfo',
                 JSON.stringify({
-                    ttotalPrice: remainingAmount,
+                    totalPrice: remainingAmount,
                     jobId: job.job_id,
                     usedCleanCoin: useWallet ? walletDeduction : 0,
                     voucher_code: bookingData.promoCode || '',
