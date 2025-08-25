@@ -20,7 +20,7 @@ const mockServices = [
 
 // --- COMPONENT PHỤ ---
 
-const VoucherCard = ({ voucher }: { voucher: Voucher }) => {
+const VoucherCard: React.FC<{ voucher: Voucher }> = ({ voucher }) => {
     const router = useRouter();
     const isExpired = new Date(voucher.expiry_date) < new Date() || !voucher.is_active;
     const discountValue = voucher.discount_percentage > 0 ? `${voucher.discount_percentage}%` : 'Free';
@@ -86,10 +86,12 @@ const VouchersPage = () => {
     }, []);
 
     useEffect(() => {
+        if (loading) return;
+        if (!user) return; // chỉ gọi sau khi đã có user
         const controller = new AbortController();
         loadVouchers(controller.signal);
         return () => controller.abort();
-    }, [loadVouchers, user?.id]); // refetch khi trạng thái đăng nhập đổi
+    }, [loadVouchers, loading, user?.id]); // refetch khi trạng thái đăng nhập đổi
 
     const todayMidnight = useMemo(() => {
         const d = new Date(); d.setHours(0,0,0,0); return d;

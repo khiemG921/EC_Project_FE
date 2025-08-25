@@ -12,10 +12,10 @@ const Header: React.FC = () => {
             </div>
             <div className="flex items-center gap-4">
                 {/* Notification Icon */}
-                <button className="relative p-2 text-slate-600 hover:text-slate-800 rounded-full hover:bg-slate-100 transition-colors">
+                {/* <button className="relative p-2 text-slate-600 hover:text-slate-800 rounded-full hover:bg-slate-100 transition-colors">
                     <i className="fas fa-bell text-xl"></i>
                     <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
-                </button>
+                </button> */}
                 {/* User Profile Info */}
                 <div className="flex items-center gap-2">
                     <img

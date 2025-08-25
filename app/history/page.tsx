@@ -22,6 +22,7 @@ import DashboardHeader from '@/components/common/DashboardHeader';
 import { useUser } from '@/hooks/useUser';
 import { Button } from '@/components/ui/button';
 import { logDev } from '@/lib/utils';
+import fetchWithAuth from '@/lib/apiClient';
 
 const createdJobs: any[] = [];
 
@@ -52,7 +53,7 @@ function CancellationModal({
 
     useEffect(() => {
         if (isOpen && job?.currency === 'USD') {
-            const exKey = process.env.NEXT_PUBLIC_EXCHANGE_RATE_API_KEY;
+            const exKey = (globalThis as any)?.process?.env?.NEXT_PUBLIC_EXCHANGE_RATE_API_KEY;
             fetch(`https://v6.exchangerate-api.com/v6/${exKey}/pair/USD/VND`)
                 .then((r) => r.json())
                 .then((data) => {
@@ -153,32 +154,26 @@ function CancellationModal({
     const handleFinalConfirm = async () => {
         const finalReason = reason === 'Lý do khác' ? otherReason : reason;
         try {
-            let res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/job/cancel/${job.job_id}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ reason: finalReason }),
-                }
-            );
+            let res = await import('@/lib/apiClient').then(m => m.fetchWithAuth(`/api/job/cancel/${job.job_id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason: finalReason }),
+            }));
+            console.debug('Cancel job response status:', res.status);
             if (!res.ok) {
                 throw new Error(`Cancel failed with status ${res.status}`);
             }
 
-            res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/customer/refund`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        customer_id: job.customer_id,
-                        amount: refund,
-                        currency: job.currency,
-                    }),
-                }
-            );
+            res = await import('@/lib/apiClient').then(m => m.fetchWithAuth(`/api/customer/refund`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    customer_id: job.customer_id,
+                    amount: refund,
+                    currency: job.currency,
+                }),
+            }));
+            console.debug('Refund response status:', res.status);
 
             if (!res.ok) {
                 throw new Error(`Refund failed with status ${res.status}`);
@@ -414,13 +409,10 @@ const StatusBadge = ({ status }: { status: string }) => {
     );
 };
 
-const JobCard = ({
-    job,
-    onCancel,
-}: {
+const JobCard: React.FC<{
     job: (typeof createdJobs)[number];
     onCancel: (job: any) => void;
-}) => {
+}> = ({ job, onCancel }) => {
     const { tasker, service, status } = job;
     const renderActions = () => {
         switch (status) {
@@ -563,21 +555,26 @@ const BookingHistoryPage = () => {
 
     // Load dữ liệu lịch sử đặt
     useEffect(() => {
+        if (loading || !user) return; // Chỉ tải khi đã có user
+        const controller = new AbortController();
         async function loadJobs() {
             try {
-                const res = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/api/job/load`,
-                    { credentials: 'include' }
-                );
+                const res = await fetchWithAuth('/api/job/load', {
+                    method: 'GET',
+                    signal: controller.signal as any,
+                });
+                console.debug('GET /api/job/load status:', res.status);
                 if (!res.ok) throw new Error(`Status ${res.status}`);
                 const data = await res.json();
-                setJobs(data);
-            } catch (err) {
+                setJobs(data || []);
+            } catch (err: any) {
+                if (err?.name === 'AbortError') return;
                 console.error('Lỗi khi load lịch sử công việc:', err);
             }
         }
         loadJobs();
-    }, []);
+        return () => controller.abort();
+    }, [loading, user?.id]);
 
     if (loading) {
         return (

@@ -105,8 +105,8 @@ export async function loginWithGoogle() {
 
   try {
     // Thử verify token trước
-    await saveSession(idToken);
-    const userData = await verifyToken();
+  await saveSession(idToken);
+  const userData = await verifyToken(idToken);
     
     if (!userData || !userData.user) {
       // User chưa có trong database, tạo mới
@@ -213,9 +213,9 @@ export async function forceLogout() {
 export async function saveSession(idToken: string) {
   logDev('Saving session with token:', idToken.substring(0, 20) + '...');
   // Prefer calling FE edge route which will mirror backend Set-Cookie into FE cookie store
-  // If NEXT_PUBLIC_API_URL is not set (or edge route fails), fall back to direct backend call
   const edgeUrl = '/api/auth/session';
   let response: Response | null = null;
+  let backendResponse: Response | null = null;
 
   try {
     response = await fetch(edgeUrl, {
@@ -224,54 +224,117 @@ export async function saveSession(idToken: string) {
       body: JSON.stringify({ idToken }),
       credentials: 'include',
     });
+    try { console.debug('[saveSession] FE edge POST status:', response.status); } catch {}
   } catch (e) {
     if (process.env.NODE_ENV === 'development') {
       console.warn('FE edge session route failed, falling back to backend:', e);
     }
   }
-
-  if (!response || !response.ok) {
-    // fallback to direct backend if API_BASE_URL provided
-    if (API_BASE_URL) {
-      try {
-        response = await fetch(`${API_BASE_URL}/api/auth/session`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idToken }),
-          credentials: 'include',
-        });
-      } catch (e) {
-        console.error('Direct backend save session failed:', e);
-        throw new Error('Failed to save session (network)');
-      }
+  // Always also call backend directly to ensure the browser stores the backend-domain cookie
+  if (API_BASE_URL) {
+    try {
+      backendResponse = await fetch(`${API_BASE_URL}/api/auth/session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+        credentials: 'include',
+      });
+      try { console.debug('[saveSession] Backend POST status:', backendResponse.status); } catch {}
+    } catch (e) {
+      console.warn('Direct backend save session failed (non-fatal):', e);
     }
   }
   
-  if (!response) throw new Error('Save session failed: no response');
+  const effective = backendResponse && backendResponse.ok ? backendResponse : response;
+  if (!effective) throw new Error('Save session failed: no response');
 
-  logDev('Save session response status:', response.status);
+  logDev('Save session response status:', effective.status);
 
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => '');
+  if (!effective.ok) {
+    const errorText = await effective.text().catch(() => '');
     console.error('Save session failed:', errorText);
     throw new Error(errorText || "Failed to save session");
   }
   
-  const result = await response.json().catch(() => ({}));
+  const result = await effective.json().catch(() => ({}));
   logDev('Session saved successfully:', result);
   console.log('Session saved successfully:', result);
   return result;
 }
 
 // Verify token và lấy thông tin user từ backend
-export async function verifyToken() {
+let __inFlightVerify: Promise<any> | null = null;
+let __lastVerifyAt = 0;
+let __lastVerifyResult: any | null = null;
+
+export async function verifyToken(passedIdToken?: string, opts?: { force?: boolean }) {
   try {
-    logDev('VerifyToken: Starting verification (cookie-based)...');
+    logDev('VerifyToken: Starting verification...');
     const url = API_BASE_URL ? `${API_BASE_URL}/api/auth/verify` : '/api/auth/verify';
-    const response = await fetch(url, {
-      method: "GET",
-      credentials: "include",
-    });
+
+    // Coalesce concurrent calls and throttle if recently verified
+    if (!opts?.force && !passedIdToken) {
+      if (__inFlightVerify) {
+        logDev('VerifyToken: Using in-flight request');
+        return __inFlightVerify;
+      }
+      const now = Date.now();
+      if (__lastVerifyResult && now - __lastVerifyAt < 3000) {
+        logDev('VerifyToken: Returning recent cached result');
+        return __lastVerifyResult;
+      }
+    }
+
+    const doRequest = async (tokenForHeader?: string, bust?: boolean) => {
+      const headers: HeadersInit = {};
+      if (tokenForHeader) headers['Authorization'] = `Bearer ${tokenForHeader}`;
+      const finalUrl = bust ? `${url}${url.includes('?') ? '&' : '?'}_ts=${Date.now()}` : url;
+      const resp = await fetch(finalUrl, { method: 'GET', headers, credentials: 'include', cache: 'no-store' });
+      try {
+        const authPrev = headers['Authorization'] ? String(headers['Authorization']).slice(0, 27) + '...' : 'none';
+        console.debug('[verifyToken] GET', finalUrl, 'status:', resp.status, 'auth:', authPrev);
+      } catch {}
+      return resp;
+    };
+
+    let tokenToUse = passedIdToken;
+    if (!tokenToUse && auth?.currentUser) {
+      try { tokenToUse = await auth.currentUser.getIdToken(); } catch {}
+      if (!tokenToUse) {
+        try { tokenToUse = await auth.currentUser.getIdToken(true); } catch {}
+      }
+    }
+
+    const exec = async () => {
+      let response = await doRequest(tokenToUse);
+      if (response.status === 304) {
+        // Fallback: retry with cache-busting query & no-store
+        response = await doRequest(tokenToUse, true);
+      }
+      if (response.status === 401 && auth?.currentUser) {
+        try {
+          const refreshed = await auth.currentUser.getIdToken(true);
+          response = await doRequest(refreshed);
+          if (response.status === 304) {
+            response = await doRequest(refreshed, true);
+          }
+        } catch {}
+      }
+      return response;
+    };
+
+    // Mark in-flight to coalesce concurrent calls
+    if (!opts?.force && !passedIdToken) {
+      __inFlightVerify = exec();
+    }
+
+    let response = await (__inFlightVerify || exec());
+    if (response.status === 304) {
+      // Fallback: retry with cache-busting query & no-store
+      response = await doRequest(tokenToUse, true);
+    }
+  // clear in-flight
+  __inFlightVerify = null;
 
     logDev('VerifyToken: Response status:', response.status);
 
@@ -279,15 +342,19 @@ export async function verifyToken() {
       const errorData = await response.json().catch(() => ({}));
       logDev('VerifyToken: Error response:', errorData);
       if (response.status === 401) {
-        throw new Error(errorData.error || "No authentication token");
+        throw new Error(errorData.error || 'No token provided');
       }
       throw new Error("Failed to verify token");
     }
 
     const result = await response.json();
     logDev('VerifyToken: Success, got user:', !!result.user);
+  // cache result briefly
+  __lastVerifyAt = Date.now();
+  __lastVerifyResult = result;
     return result;
   } catch (networkError) {
+  __inFlightVerify = null;
     if (networkError instanceof TypeError && networkError.message.includes('fetch')) {
       throw new Error("Network error - cannot reach authentication server");
     }

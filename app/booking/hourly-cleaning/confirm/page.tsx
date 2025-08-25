@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Wallet } from 'lucide-react';
 import { logDev } from '@/lib/utils';
 import Swal from 'sweetalert2';
+import fetchWithAuth from '@/lib/apiClient';
 
 // --- DỮ LIỆU DỊCH VỤ ---
 const allPricingOptions = [
@@ -98,7 +99,7 @@ const ConfirmationPage = () => {
         let aborted = false;
         (async () => {
             try {
-                const res = await fetch(
+                const res = await fetchWithAuth(
                     `${process.env.NEXT_PUBLIC_API_URL}/api/customer/reward-points`,
                     { credentials: 'include' }
                 );
@@ -296,12 +297,10 @@ const ConfirmationPage = () => {
     const handleConfirm = async () => {
         // 1) Tạo Job trên backend
         try {
-            const res = await fetch(
+            const res = await fetchWithAuth(
                 `${process.env.NEXT_PUBLIC_API_URL}/api/job/create`,
                 {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
                     body: JSON.stringify({
                         serviceId: serviceInfo.id,
                         serviceDetailId:

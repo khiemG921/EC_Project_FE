@@ -165,7 +165,24 @@ const RegisterPage = () => {
                             value={otpDigits}
                             onChange={setOtpDigits}
                             onVerify={handleVerifyOtp}
-                            onResend={undefined}
+                            onResend={async () => {
+                                setLoading(true);
+                                setError("");
+                                setMessage("");
+                                try {
+                                    const res = await registerUser(email, password, name, phone);
+                                    if (res && res.needVerify) {
+                                        setMessage(res.isExistingUser
+                                            ? "Email đã tồn tại. Đã gửi lại mã xác thực để hoàn tất đăng nhập."
+                                            : "Đã gửi lại mã xác thực về email. Vui lòng kiểm tra hộp thư.");
+                                        setOtpDigits(Array(6).fill(""));
+                                    }
+                                } catch (err: any) {
+                                    setError(err?.message || 'Không thể gửi lại mã xác thực.');
+                                } finally {
+                                    setLoading(false);
+                                }
+                            }}
                             disabled={loading}
                             expireSeconds={120}
                             resendLimit={3}

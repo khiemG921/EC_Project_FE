@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
 import Swal from 'sweetalert2';
 import { getVoucherCodeFromStorage } from '@/lib/paymentUtils';
+import fetchWithAuth from '@/lib/apiClient';
 
 function ZaloCaptureOrderContent() {
     const params = useSearchParams();
@@ -27,8 +28,8 @@ function ZaloCaptureOrderContent() {
         // 2) Nếu thành công, query trạng thái đơn từ backend
         (async () => {
             try {
-                const txRes = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/api/transaction/create`,
+                const txRes = await fetchWithAuth(
+                    `/api/transaction/create`,
                     {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },

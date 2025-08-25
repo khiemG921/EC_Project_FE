@@ -134,7 +134,7 @@ const OtpInput: React.FC<OtpInputProps> = ({
             onChange={e => handleChange(i, e.target.value)}
             onPaste={i === 0 ? handlePaste : undefined}
             ref={el => { inputs.current[i] = el; }}
-            disabled={disabled || verifying || countdown === 0 || resendLocked}
+            disabled={disabled || verifying || countdown === 0}
             autoFocus={autoFocus && i === 0}
           />
         ))}

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Swal from 'sweetalert2';
 import { Wallet } from 'lucide-react';
 import { logDev } from '@/lib/utils';
+import fetchWithAuth from '@/lib/apiClient';
 
 const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || 'https://ecprojectbe-production.up.railway.app';
 
@@ -331,7 +332,7 @@ export default function ACConfirmStep() {
         let aborted = false;
         (async () => {
             try {
-                const res = await fetch(
+                const res = await fetchWithAuth(
                     `${process.env.NEXT_PUBLIC_API_URL}/api/customer/reward-points`,
                     { credentials: 'include' }
                 );
@@ -442,12 +443,10 @@ export default function ACConfirmStep() {
         // 1) Tạo Job trên backend
         try {
             // 1) Tạo Job trên backend
-            const res = await fetch(
+            const res = await fetchWithAuth(
                 `${process.env.NEXT_PUBLIC_API_URL}/api/job/create`,
                 {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
                     body: JSON.stringify({
                         serviceId: serviceInfo.id, // hoặc giá trị tương ứng
                         serviceDetailId: (() => {
@@ -506,12 +505,10 @@ export default function ACConfirmStep() {
             );
             // Trừ CleanPay (reward_points) nếu khách dùng ví
             if (useWallet && walletDeduction > 0) {
-                await fetch(
+                await fetchWithAuth(
                     `${process.env.NEXT_PUBLIC_API_URL}/api/customer/substract-cleanpay`,
                     {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
                         body: JSON.stringify({ amount: walletDeduction }),
                     }
                 );

@@ -3,6 +3,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
 import Swal from 'sweetalert2';
 import { getVoucherCodeFromStorage } from '@/lib/paymentUtils';
+import fetchWithAuth from '@/lib/apiClient';
 
 function MomoCaptureOrderContent() {
     const params = useSearchParams();
@@ -33,7 +34,7 @@ function MomoCaptureOrderContent() {
         }
 
         // 3) Gọi API tạo transaction
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/transaction/create`, {
+        fetchWithAuth(`/api/transaction/create`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },

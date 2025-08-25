@@ -1,4 +1,4 @@
-'use client';
+ 'use client';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -16,19 +16,19 @@ import {
     Tag,
     Bookmark,
 } from 'lucide-react';
-import { useAuth } from '@/providers/auth_provider';
+import { useUser } from '@/hooks/useUser';
 
 // Header component cho trang chủ
 // --- COMPONENT HEADER ---
 // Component này tự quản lý trạng thái đăng nhập và hiển thị UI tương ứng.
 export function Header() {
-    const { user, loading, logout } = useAuth();
+    const { user, loading, logoutUser } = useUser();
     const [isMenuOpen, setMenuOpen] = useState(false);
     const router = useRouter();
 
     const handleLogout = async () => {
         try {
-            await logout();
+            await logoutUser();
         } catch (e) {
             console.error('Logout failed:', e);
         } finally {
@@ -78,7 +78,7 @@ export function Header() {
             { label: 'Ưu đãi', icon: Tag, href: '/vouchers' },
             // { label: 'Cài đặt', icon: Settings, href: '/settings' }
         );
-        if (user.roles?.includes('tasker')) {
+        if (Array.isArray(user.roles) && user.roles.includes('tasker')) {
             userMenuItems.push({
                 label: 'Nhận việc',
                 icon: LayoutGrid,
