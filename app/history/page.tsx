@@ -486,13 +486,15 @@ const JobCard: React.FC<JobCardProps> = ({
                         >
                             <XCircle size={16} /> Hủy đơn
                         </button>
-                        <button
-                            onClick={() => onConfirmCompletion(job.job_id)}
-                            disabled={job.completed_at == null}
-                            className="flex-1 bg-green-500 hover:bg-green-600 text-white rounded-lg px-4 py-2 disabled:opacity-50"
-                        >
-                            Xác nhận hoàn thành
-                        </button>
+                        {job.completed_at ? (
+                            <button
+                                onClick={() => onConfirmCompletion(job.job_id)}
+                                disabled={job.completed_at == null}
+                                className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 text-sm font-semibold text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors"
+                            >
+                                Xác nhận hoàn thành
+                            </button>
+                        ) : null}
                     </>
                 );
             default:

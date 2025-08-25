@@ -13,6 +13,7 @@ import {
     TaskerApplication,
 } from '@/lib/taskerApplicationApi';
 import { fetchVoucherSummary } from '@/lib/vouchersApi';
+import { logDev } from '@/lib/utils';
 
 const initialDashboardData = {
     walletBalance: 0,
@@ -117,6 +118,7 @@ const CustomerDashboardPage = () => {
                 );
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const { count } = await res.json();
+                logDev('Fetched pending jobs count:', count);
                 setDashboardData((prev) => ({
                     ...prev,
                     ongoingJobsCount: count,
@@ -295,7 +297,7 @@ const CustomerDashboardPage = () => {
                         onClick={() => router.push('/history')}
                     />
                 </div>
-
+                
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Sidebar */}
                     <div className="space-y-6">
