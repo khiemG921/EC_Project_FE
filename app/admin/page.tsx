@@ -17,6 +17,11 @@ interface DashboardStats {
     cancelledBookings: number;
     totalPromotions: number;
     activePromotions: number;
+    // Doanh thu
+    revenueToday: number;
+    revenueWeek: number;
+    revenueMonth: number;
+    revenueYear: number;
 }
 
 // Định nghĩa kiểu dữ liệu cho hoạt động gần đây
@@ -40,7 +45,14 @@ const mockStats: DashboardStats = {
     cancelledBookings: 0,
     totalPromotions: 20,
     activePromotions: 12,
+    revenueToday: 0,
+    revenueWeek: 0,
+    revenueMonth: 0,
+    revenueYear: 0,
 };
+
+// Helper format tiền VND
+const formatVND = (value: number) => `${value.toLocaleString('vi-VN')}đ`;
 
 // Dữ liệu giả định cho Hoạt động gần đây
 const mockRecentActivities: RecentActivity[] = [
@@ -212,6 +224,41 @@ const AdminDashboardPage: React.FC = () => {
                         icon="fas fa-gift"
                         colorClass="bg-orange-500"
                     />
+                </div>
+
+                {/* Doanh thu */}
+                <div className="mb-8">
+                    <h2 className="text-xl font-bold text-gray-800 mb-4">Doanh thu</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <DashboardCard
+                            title="Hôm nay"
+                            value={formatVND(stats.revenueToday)}
+                            description="Doanh thu trong ngày"
+                            icon="fas fa-wallet"
+                            colorClass="bg-emerald-500"
+                        />
+                        <DashboardCard
+                            title="Tuần này"
+                            value={formatVND(stats.revenueWeek)}
+                            description="Tổng doanh thu tuần"
+                            icon="fas fa-calendar-week"
+                            colorClass="bg-cyan-500"
+                        />
+                        <DashboardCard
+                            title="Tháng này"
+                            value={formatVND(stats.revenueMonth)}
+                            description="Tổng doanh thu tháng"
+                            icon="fas fa-calendar-alt"
+                            colorClass="bg-indigo-500"
+                        />
+                        <DashboardCard
+                            title="Năm nay"
+                            value={formatVND(stats.revenueYear)}
+                            description="Tổng doanh thu năm"
+                            icon="fas fa-chart-line"
+                            colorClass="bg-rose-500"
+                        />
+                    </div>
                 </div>
 
                 {/* Chi tiết đặt lịch theo trạng thái */}
