@@ -6,6 +6,7 @@ import { registerUser, verifyRegisterCode } from "@/lib/authClient";
 import OtpInput from '@/components/common/OtpInput';
 
 // --- COMPONENT MODAL CHÍNH SÁCH ---
+import { X } from 'lucide-react';
 const PolicyModal = ({ initialTab, onClose }: { initialTab: 'terms' | 'privacy', onClose: () => void }) => {
     const [activeTab, setActiveTab] = useState(initialTab);
 
@@ -76,6 +77,8 @@ const PolicyModal = ({ initialTab, onClose }: { initialTab: 'terms' | 'privacy',
 
 const RegisterPage = () => {
     const [termsAccepted, setTermsAccepted] = useState(false);
+    const [policyOpen, setPolicyOpen] = useState(false);
+    const [policyInitialTab, setPolicyInitialTab] = useState<'terms' | 'privacy'>('terms');
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -96,14 +99,14 @@ const RegisterPage = () => {
             timerRef.current = setInterval(() => {
                 setCountdown(prev => {
                     if (prev <= 1) {
-                        clearInterval(timerRef.current!);
+                        if (timerRef.current) clearInterval(timerRef.current);
                         return 0;
                     }
                     return prev - 1;
                 });
             }, 1000);
         }
-        return () => { if (timerRef.current) clearInterval(timerRef.current); };
+        return () => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } };
     }, [step]);
 
     function formatCountdown(sec: number) {
@@ -213,7 +216,7 @@ const RegisterPage = () => {
                                 className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                             />
                             <label htmlFor="terms" className="text-sm text-slate-600">
-                                Tôi đã đọc và đồng ý với <a href="#" className="font-semibold text-teal-500 hover:underline">Điều khoản</a> và <a href="#" className="font-semibold text-teal-500 hover:underline">Chính sách Bảo mật</a>.
+                                Tôi đã đọc và đồng ý với <a href="#" onClick={(e) => { e.preventDefault(); setPolicyInitialTab('terms'); setPolicyOpen(true); }} className="font-semibold text-teal-500 hover:underline">Điều khoản</a> và <a href="#" onClick={(e) => { e.preventDefault(); setPolicyInitialTab('privacy'); setPolicyOpen(true); }} className="font-semibold text-teal-500 hover:underline">Chính sách Bảo mật</a>.
                             </label>
                         </div>
                         <button 
@@ -265,6 +268,9 @@ const RegisterPage = () => {
                     Đã có tài khoản? <a href="/auth/login" className="font-bold text-teal-500 hover:underline">Đăng nhập</a>
                 </p>
             </div>
+            {policyOpen && (
+                <PolicyModal initialTab={policyInitialTab} onClose={() => setPolicyOpen(false)} />
+            )}
         </div>
     );
 };
