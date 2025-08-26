@@ -83,15 +83,15 @@ const CustomerDashboardPage = () => {
 
     // Load voucher summary for count
     useEffect(() => {
+        if (!user?.id) return;
         let aborted = false;
         const controller = new AbortController();
-        const run = async () => {
-            if (!user?.id) return;
+
+        (async () => {
             try {
                 const summary = await fetchVoucherSummary(controller.signal);
                 if (aborted) return;
-                const available =
-                    summary?.active ?? summary?.total ?? summary?.count ?? 0;
+                const available = summary?.active ?? summary?.total ?? summary?.count ?? 0;
                 setDashboardData((prev) => ({
                     ...prev,
                     availableVouchers: Number(available) || 0,
@@ -99,8 +99,8 @@ const CustomerDashboardPage = () => {
             } catch (e) {
                 // ignore
             }
-        };
-        run();
+        })();
+
         return () => {
             aborted = true;
             controller.abort();
