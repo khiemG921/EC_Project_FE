@@ -122,10 +122,11 @@ const RegisterPage = () => {
         setError("");
         try {
             const res = await registerUser(email, password, name, phone);
-            if (res.needVerify) {
+            const shouldGoOtp = Boolean((res && (res.needVerify === true)) || res?.uid || res?.message);
+            if (shouldGoOtp) {
                 setStep(2);
                 setOtpDigits(Array(6).fill(""));
-                if (res.isExistingUser) {
+                if (res?.isExistingUser) {
                     setMessage("Email đã tồn tại. Đã gửi mã xác thực để hoàn tất đăng nhập.");
                 } else {
                     setMessage("Đã gửi mã xác thực về email. Vui lòng kiểm tra hộp thư.");
