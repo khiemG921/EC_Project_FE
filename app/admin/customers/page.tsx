@@ -232,11 +232,12 @@ export default function AdminCustomersPage() {
                 {/* Bảng dữ liệu khách hàng */}
                 <div className="bg-white rounded-lg shadow overflow-x-auto">
                     <table className="w-full min-w-max text-sm text-left text-gray-600">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-100">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-100">
                             <tr>
                                 <th className="px-4 py-3">Người dùng</th>
                                 <th className="px-4 py-3">Email</th>
                                 <th className="px-4 py-3">SĐT</th>
+                <th className="px-4 py-3">Trạng thái</th>
                                 <th className="px-4 py-3">Quyền</th>
                                 <th className="px-4 py-3">Điểm thưởng</th>
                                 <th className="px-4 py-3">Hành động</th>
@@ -245,7 +246,7 @@ export default function AdminCustomersPage() {
                         <tbody>
                             {loading && (
                                 <tr>
-                                    <td colSpan={6} className="p-4">
+                                    <td colSpan={7} className="p-4">
                                         Đang tải...
                                     </td>
                                 </tr>
@@ -253,7 +254,7 @@ export default function AdminCustomersPage() {
                             {!loading && error && (
                                 <tr>
                                     <td
-                                        colSpan={6}
+                                        colSpan={7}
                                         className="p-4 text-red-600"
                                     >
                                         {error}
@@ -283,6 +284,13 @@ export default function AdminCustomersPage() {
                                         </td>
                                         <td className="px-4 py-3">
                                             {user.phone || '—'}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {user.active ? (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">● Active</span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200">● Inactive</span>
+                                            )}
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-3">
@@ -334,7 +342,7 @@ export default function AdminCustomersPage() {
                                 ))}
                             {!loading && !error && pageSlice.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="p-4">
+                                    <td colSpan={7} className="p-4">
                                         Không tìm thấy người dùng.
                                     </td>
                                 </tr>

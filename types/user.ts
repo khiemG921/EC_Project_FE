@@ -9,6 +9,7 @@ export interface User {
   dob?: string;
   address?: string;
   rewardPoints?: number;
+  active?: boolean; 
   taskerInfo?: {
     avgRating?: number;
     completedJobs?: number;
