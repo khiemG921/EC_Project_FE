@@ -331,18 +331,6 @@ export default function PaymentPage() {
             console.warn('No jobId to cancel');
         }
 
-        // 2) Gọi API hoàn tiền CleanPay (refund) nếu đã sử dụng ví
-        if (cleanCoin > 0) {
-            try {
-                await fetchWithAuth(`/api/customer/refund`, {
-                    method: 'POST',
-                    body: JSON.stringify({ amount: cleanCoin }),
-                });
-            } catch (err) {
-                console.error('Refund CleanPay failed:', err);
-            }
-        }
-
         window.history.back(); // Quay lại trang trước đó trong lịch sử trình duyệt
     };
 
@@ -362,18 +350,6 @@ export default function PaymentPage() {
             }
         } else {
             console.warn('No jobId to cancel');
-        }
-
-        // 2) Gọi API hoàn tiền CleanPay (refund) nếu đã sử dụng ví
-        if (cleanCoin > 0) {
-            try {
-                await fetchWithAuth(`/api/customer/refund`, {
-                    method: 'POST',
-                    body: JSON.stringify({ amount: cleanCoin }),
-                });
-            } catch (err) {
-                console.error('Refund CleanPay failed:', err);
-            }
         }
 
         // 3) Thông báo và điều hướng
