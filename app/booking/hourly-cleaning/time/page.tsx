@@ -68,16 +68,18 @@ const TimeSelectionPage = () => {
         }
         return null;
     };
-    const savedBookingData = getSavedBookingData() ? JSON.parse(getSavedBookingData()!) : null;
+    const savedBookingData = getSavedBookingData()
+        ? JSON.parse(getSavedBookingData()!)
+        : null;
     const [bookingData, setBookingData] = useState({
-        staffCount: savedBookingData.staffCount || 1,
-        durationId: savedBookingData.durationId || 2,
-        address: savedBookingData.address || '',
-        selectedOptionIds: savedBookingData.selectedOptionIds || [99],
-        notes: savedBookingData.notes || '',
-        promoCode: savedBookingData.promoCode || '',
-        workDate: savedBookingData.workDate || null,
-        startTime: savedBookingData.startTime || '',
+        staffCount: 1,
+        durationId: 2,
+        address: '',
+        selectedOptionIds: [99],
+        notes: '',
+        promoCode: '',
+        workDate: null as Date | null,
+        startTime: '',
     });
 
     const [checkoutResult, setCheckoutResult] = useState<any>(null);
@@ -88,29 +90,6 @@ const TimeSelectionPage = () => {
     const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
     const [isDataRestored, setIsDataRestored] = useState(false);
     const [fromServicePage, setFromServicePage] = useState(false);
-
-    // chỉ cho phép footer khi workDate >= hôm nay và startTime >= giờ hiện tại nếu là hôm nay
-    const canContinue = useMemo(() => {
-        if (!bookingData.workDate || !bookingData.startTime) return false;
-        const now = new Date();
-        const today = new Date(now);
-        today.setHours(0, 0, 0, 0);
-
-        const selectedDate = new Date(bookingData.workDate);
-        selectedDate.setHours(0, 0, 0, 0);
-        // ngày chọn trước hôm nay => không cho tiếp tục
-        if (selectedDate < today) return false;
-
-        // nếu chọn ngày hôm nay, thì kiểm tra giờ bắt đầu >= giờ hiện tại
-        if (selectedDate.getTime() === today.getTime()) {
-            const [h, m] = bookingData.startTime.split(':').map(Number);
-            const selectedDateTime = new Date(bookingData.workDate);
-            selectedDateTime.setHours(h, m, 0, 0);
-            if (selectedDateTime < now) return false;
-        }
-
-        return true;
-    }, [bookingData.workDate, bookingData.startTime]);
 
     // Khôi phục booking data từ localStorage khi mount
     useEffect(() => {
@@ -150,9 +129,7 @@ const TimeSelectionPage = () => {
                 logDev('No saved data found');
                 // Nếu không có data và không phải từ service page thì có thể redirect
                 if (!fromService) {
-                    logDev(
-                        'No data and not from service, should redirect'
-                    );
+                    logDev('No data and not from service, should redirect');
                 }
                 setIsDataRestored(true);
             }
@@ -162,12 +139,33 @@ const TimeSelectionPage = () => {
         }
     }, []);
 
+    // chỉ cho phép footer khi workDate >= hôm nay và startTime >= giờ hiện tại nếu là hôm nay
+    const canContinue = useMemo(() => {
+        if (!bookingData.workDate || !bookingData.startTime) return false;
+        const now = new Date();
+        const today = new Date(now);
+        today.setHours(0, 0, 0, 0);
+
+        const selectedDate = new Date(bookingData.workDate);
+        selectedDate.setHours(0, 0, 0, 0);
+        // ngày chọn trước hôm nay => không cho tiếp tục
+        if (selectedDate < today) return false;
+
+        // nếu chọn ngày hôm nay, thì kiểm tra giờ bắt đầu >= giờ hiện tại
+        if (selectedDate.getTime() === today.getTime()) {
+            const [h, m] = bookingData.startTime.split(':').map(Number);
+            const selectedDateTime = new Date(bookingData.workDate);
+            selectedDateTime.setHours(h, m, 0, 0);
+            if (selectedDateTime < now) return false;
+        }
+
+        return true;
+    }, [bookingData.workDate, bookingData.startTime]);
+
     // Validation logic - chỉ chạy sau khi đã restore
     useEffect(() => {
         if (!isDataRestored || typeof window === 'undefined') {
-            logDev(
-                'Data not restored yet or server-side, skipping validation'
-            );
+            logDev('Data not restored yet or server-side, skipping validation');
             return;
         }
 
