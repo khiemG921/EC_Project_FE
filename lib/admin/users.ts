@@ -25,6 +25,7 @@ export async function fetchUsers(): Promise<User[]> {
             dob: user.date_of_birth || user.dob || '',
             address: user.address || '',
             rewardPoints: user.reward_points || user.rewardPoints || 0,
+            active: Boolean(user.active),
         })
     );
 }
@@ -68,6 +69,7 @@ export async function createUser(data: User): Promise<User> {
         address: responseData.address || '',
         rewardPoints:
             responseData.reward_points || responseData.rewardPoints || 0,
+    active: Boolean(responseData.active),
     };
 }
 
@@ -113,6 +115,7 @@ export async function updateUser(
         address: responseData.address || '',
         rewardPoints:
             responseData.reward_points || responseData.rewardPoints || 0,
+    active: Boolean(responseData.active),
     };
 }
 
