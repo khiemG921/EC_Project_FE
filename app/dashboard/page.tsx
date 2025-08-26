@@ -12,7 +12,7 @@ import {
     taskerApplicationApi,
     TaskerApplication,
 } from '@/lib/taskerApplicationApi';
-import { userAgent } from 'next/server';
+import { fetchVoucherSummary } from '@/lib/vouchersApi';
 
 const initialDashboardData = {
     walletBalance: 0,
@@ -76,6 +76,23 @@ const CustomerDashboardPage = () => {
         }));
         
     }, [user?.id]);
+
+    // Lấy thông tin voucher
+    useEffect(() => {
+        if (!user?.id) return;
+        let mounted = true;
+        (async () => {
+          try {
+            const data = await fetchVoucherSummary();
+            if (!mounted) return;
+            const available = data?.active ?? data?.total ?? 0;
+            setDashboardData(prev => ({ ...prev, availableVouchers: Number(available) }));
+          } catch (err) {
+            console.error('Failed to load voucher summary', err);
+          }
+        })();
+        return () => { mounted = false; };
+      }, [user?.id]);
 
     // Kiểm tra trạng thái đơn đăng ký khi component mount
     useEffect(() => {
