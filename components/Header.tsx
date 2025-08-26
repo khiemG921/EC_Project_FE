@@ -129,10 +129,10 @@ export function Header() {
                         ) : user ? (
                             // Giao diện khi đã đăng nhập
                             <div className="flex items-center gap-4">
-                                <button className="relative text-slate-500 hover:text-teal-600 transition-colors">
+                                {/* <button className="relative text-slate-500 hover:text-teal-600 transition-colors">
                                     <Bell size={22} />
                                     <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
-                                </button>
+                                </button> */}
                                 <div className="relative">
                                     <button
                                         onClick={() => setMenuOpen(!isMenuOpen)}
