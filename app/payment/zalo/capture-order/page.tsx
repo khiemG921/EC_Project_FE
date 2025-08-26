@@ -9,6 +9,10 @@ import fetchWithAuth from '@/lib/apiClient';
 function ZaloCaptureOrderContent() {
     const params = useSearchParams();
 
+    const paymentInfoString = localStorage.getItem('paymentInfo');
+    const paymentInfo = paymentInfoString ? JSON.parse(paymentInfoString) : {};
+    const cleanCoinUsed = paymentInfo.usedCleanCoin ?? 0;
+
     useEffect(() => {
         const zpTransToken = params.get('checksum');
         const returnCode = params.get('status');
@@ -44,6 +48,7 @@ function ZaloCaptureOrderContent() {
                             status: 'COMPLETED',
                             paidAt: new Date().toISOString(),
                             voucher_code: getVoucherCodeFromStorage() || null,
+                            cleanCoinUsed: cleanCoinUsed,
                         }),
                     }
                 );

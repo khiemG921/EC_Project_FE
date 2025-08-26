@@ -4,11 +4,11 @@ import { Bookmark } from 'lucide-react';
 import DashboardHeader from '@/components/common/DashboardHeader';
 import ServiceCard from '@/components/common/ServiceCard'; // Giả định bạn có một component ServiceCard chung
 import EmptyState from '@/components/common/EmptyState';
-import { useAuth } from '@/providers/auth_provider';
+import { useUser } from '@/hooks/useUser';
 import { useWatchlistServices } from '@/hooks/useWatchlistServices';
 
 const WatchlistPage = () => {
-    const { user, logout, loading: authLoading } = useAuth();
+    const { user, logoutUser, loading: authLoading } = useUser();
     const isAuthenticated = !!user;
     
     // Sử dụng hook mới để lấy danh sách xem sau
@@ -50,7 +50,7 @@ const WatchlistPage = () => {
         <div className="min-h-screen bg-slate-50 font-sans">
             <DashboardHeader
                 user={user}
-                onLogout={logout}
+                onLogout={logoutUser}
                 activeRole={activeRole}
                 onRoleChange={() => { }}
                 showRoleSwitcher={user.roles.length > 1}

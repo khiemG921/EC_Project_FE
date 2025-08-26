@@ -26,6 +26,7 @@ import {
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import fetchWithAuth from '@/lib/apiClient';
 
 // --- TYPES AND FETCH DATA ---
 
@@ -429,7 +430,7 @@ const AdminBookingManagementPage = () => {
             setIsLoading(true);
             try {
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-                const res = await fetch(`${apiUrl}/api/admin/jobs`, {
+                const res = await fetchWithAuth(`/api/admin/jobs`, {
                     credentials: 'include',
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -663,16 +664,14 @@ const AdminBookingManagementPage = () => {
                                             )}
                                         </td>
                                         <td className="px-6 py-4 font-semibold text-gray-700">
-                                            {(
-                                                parseFloat(
-                                                    booking.amount?.toString() ||
-                                                        '0'
-                                                ) +
-                                                    parseFloat(
-                                                        booking.platform_fee?.toString() ||
-                                                            '0'
-                                                    ) || 0
-                                            ).toLocaleString('en-US')}
+                                            {(() => {
+                                                const total =
+                                                    parseFloat(booking.amount?.toString() || '0') +
+                                                    parseFloat(booking.platform_fee?.toString() || '0');
+                                                return booking.currency === 'USD'
+                                                    ? `$${total.toLocaleString('en-US')}`
+                                                    : `${total.toLocaleString('en-US')}đ`;
+                                            })()}
                                         </td>
                                         <td className="px-6 py-4">
                                             {booking.created_at

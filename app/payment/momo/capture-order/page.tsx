@@ -8,6 +8,10 @@ import fetchWithAuth from '@/lib/apiClient';
 function MomoCaptureOrderContent() {
     const params = useSearchParams();
 
+    const paymentInfoString = localStorage.getItem('paymentInfo');
+    const paymentInfo = paymentInfoString ? JSON.parse(paymentInfoString) : {};
+    const cleanCoinUsed = paymentInfo.usedCleanCoin ?? 0;
+
     useEffect(() => {
         // 1) Lấy dữ liệu MoMo trả về từ query string
         const transId = params.get('transId');
@@ -48,6 +52,7 @@ function MomoCaptureOrderContent() {
                 status: 'COMPLETED',
                 paidAt: new Date().toISOString(),
                 voucher_code: getVoucherCodeFromStorage() || null,
+                cleanCoinUsed: cleanCoinUsed,
             }),
         })
             .then(async (res) => {

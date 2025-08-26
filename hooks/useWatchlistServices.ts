@@ -1,22 +1,15 @@
 import { useState, useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { useUser } from '@/hooks/useUser';
 import { Service } from '@/lib/servicesApi';
 import { SERVICE_ID_TO_BOOKING_URL } from '@/lib/servicesApi';
 
 export const useWatchlistServices = () => {
-  const [user, setUser] = useState<any>(null);
+  const { user, loading: authLoading } = useUser();
   const [watchlistServices, setWatchlistServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       setWatchlistServices([]);
       return;
@@ -57,10 +50,10 @@ export const useWatchlistServices = () => {
     };
 
     fetchWatchlist();
-  }, [user]);
+  }, [user?.id, authLoading]);
 
   const removeWatchlist = async (serviceId: number) => {
-    if (!user) {
+  if (!user) {
       console.warn('User must be authenticated to remove from watchlist');
       return;
     }

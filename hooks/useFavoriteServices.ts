@@ -1,23 +1,14 @@
 import { useState, useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { useUser } from '@/hooks/useUser';
 
 export const useFavoriteServices = () => {
-  const [user, setUser] = useState<any>(null);
+  const { user, loading: authLoading } = useUser();
   const [favorites, setFavorites] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Listen to Firebase auth state changes
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
   // Reset favorites when user logs out or is not authenticated
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       setFavorites([]);
       return;
@@ -47,22 +38,21 @@ export const useFavoriteServices = () => {
     };
 
     fetchFavorites();
-  }, [user]);
+  }, [user?.id, authLoading]);
 
   const toggleFavorite = async (serviceId: number) => {
-    if (!user) {
+  if (!user) {
       console.warn('User must be authenticated to toggle favorites');
       return;
     }
 
     try {
-      const token = await user.getIdToken();
       const isFavorite = favorites.includes(serviceId);
       
       // Use add or remove endpoint based on current state
       const endpoint = isFavorite ? '/api/favorite/remove' : '/api/favorite/add';
       
-      const response = await import('@/lib/apiClient').then(m => m.fetchWithAuth(endpoint, {
+  const response = await import('@/lib/apiClient').then(m => m.fetchWithAuth(endpoint, {
         method: 'POST',
         body: JSON.stringify({ serviceId }),
       }));

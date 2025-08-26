@@ -6,6 +6,8 @@ import { Star, Heart, User, Send, Loader2, X } from 'lucide-react';
 import { Header } from '@/components/Header';
 import Footer from '@/components/Footer';
 import { logDev } from '@/lib/utils';
+import fetchWithAuth from '@/lib/apiClient';
+import { useUser } from '@/hooks/useUser';
 
 
 interface Service {
@@ -28,7 +30,7 @@ interface Customer {
 interface Review {
   review_id: number;
   customer_id: number;
-  job_id: number;
+  job_id?: number | null;
   service_id: number; // Đã đổi thành number
   rating_job: number;
   rating_tasker: number;
@@ -40,7 +42,7 @@ interface Review {
 const fetchWithExponentialBackoff = async (url: string, options: RequestInit, maxRetries = 5, delay = 1000) => {
   for (let i = 0; i < maxRetries; i++) {
     try {
-      const response = await fetch(url, options);
+      const response = await fetchWithAuth(url, options);
       if (response.status !== 429) { // 429 Too Many Requests
         return response;
       }
@@ -83,17 +85,9 @@ const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '
   const [reviewDetail, setReviewDetail] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Giả lập dữ liệu người dùng và yêu thích, bạn sẽ thay thế bằng dữ liệu thực
-  const MOCK_LOGGED_IN = true;
-  const MOCK_USER = { 
-    customer_id: 1, 
-    name: 'Lê Văn C', 
-    email: 'levanc@example.com', 
-    roles: ['customer'], 
-    avatar_url: 'https://placehold.co/40x40/f4f4f4/000000?text=C' 
-  };
+  // User thực từ hook
+  const { user, loading: authLoading } = useUser();
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
-  const user = MOCK_LOGGED_IN ? MOCK_USER : null;
 
   useEffect(() => {
     if (!serviceId) {
@@ -103,8 +97,8 @@ const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '
 
     const fetchServiceAndReviews = async () => {
       try {
-        // Gọi API services
-        const resService = await fetchWithExponentialBackoff(`${API_BASE_URL}/services/${serviceId}`, {});
+        // Gọi API services (single service)
+        const resService = await fetchWithExponentialBackoff(`${API_BASE_URL}/api/services/${serviceId}`, {});
         if (!resService.ok) {
           throw new Error('Không thể tải thông tin dịch vụ');
         }
@@ -112,9 +106,10 @@ const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '
         setService(serviceData);
         logDev("Service Data:", serviceData);
 
-        // Gọi API reviews
-        const resReviews = await fetchWithExponentialBackoff(`${API_BASE_URL}/reviews/service/${serviceId}`, {});
+        const resReviews = await fetchWithExponentialBackoff(`${API_BASE_URL}/api/reviews/service/${serviceId}`, {});
         if (!resReviews.ok) {
+          const txt = await resReviews.text().catch(() => '');
+          console.error('Fetch reviews failed:', resReviews.status, txt);
           throw new Error('Không thể tải các đánh giá');
         }
         const dataReviews = await resReviews.json();
@@ -145,9 +140,8 @@ const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '
 
     setIsSubmitting(true);
     
-    const newReviewData = {
-      customer_id: user.customer_id,
-      job_id: Math.floor(Math.random() * 1000),
+  const newReviewData = {
+      // Không gửi job_id để tránh lỗi FK; hỗ trợ review công khai
       service_id: parseInt(serviceId as string, 10),
       rating_job: reviewRating,
       rating_tasker: reviewRating,
@@ -155,7 +149,7 @@ const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '
     };
 
     try {
-        const response = await fetchWithExponentialBackoff(`${API_BASE_URL}/reviews`, {
+  const response = await fetchWithExponentialBackoff(`${API_BASE_URL}/api/reviews`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -164,11 +158,23 @@ const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '
         });
 
         if (!response.ok) {
+          const txt = await response.text().catch(() => '');
+          console.error('POST /api/reviews failed:', response.status, txt);
           throw new Error('Đăng đánh giá thất bại');
         }
 
         const result = await response.json();
-        const createdReview = { ...newReviewData, review_id: result.review_id || Date.now(), Customer: MOCK_USER };
+        const createdReview: Review = {
+          customer_id: Number((user as any)?.customer_id ?? (user as any)?.id) || 0,
+          ...newReviewData,
+          review_id: result.review_id || Date.now(),
+          job_id: null, // not used in UI
+          Customer: {
+            customer_id: Number((user as any)?.customer_id ?? (user as any)?.id) || 0,
+            name: user.name || 'Khách hàng',
+            avatar_url: user.avatar_url || user.avatar || 'https://placehold.co/48x48/f4f4f4/000000?text=C',
+          },
+        };
         
         setReviews((prev) => [createdReview, ...prev]);
         setReviewRating(0);
@@ -197,7 +203,7 @@ const API_BASE_URL = (globalThis as any)?.process?.env?.NEXT_PUBLIC_API_URL || '
     );
   };
   
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <Loader2 className="animate-spin text-teal-500" size={48} />

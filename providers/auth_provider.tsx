@@ -51,19 +51,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
          window.location.pathname.includes('/register') || 
          window.location.pathname.includes('/login'));
       
+      const hasCookieToken = () => typeof document !== 'undefined' && document.cookie.includes('token=');
+
       if (firebaseUser) {
         try {
-          // Đảm bảo Firebase user đã được authenticate hoàn toàn
-          const idToken = await firebaseUser.getIdToken(false);
+          let idToken: string | null = null;
+          for (let i = 0; i < 3 && !idToken; i++) {
+            try { idToken = await firebaseUser.getIdToken(false); } catch {}
+            if (!idToken) await new Promise(r => setTimeout(r, 150));
+          }
           if (!idToken) {
-            logDev('No valid ID token available');
+            try { idToken = await firebaseUser.getIdToken(true); } catch {}
+          }
+          if (!idToken && !hasCookieToken()) {
+            logDev('No valid ID token or cookie available');
             setUser(null);
             setLoading(false);
             return;
           }
 
-          // Verify token và lấy thông tin user từ backend
-          const userData = await verifyToken();
+          // Verify token và lấy thông tin user từ backend (helper sẽ đính kèm Authorization/cookie)
+          const userData = await verifyToken(idToken || undefined);
           // console.log('User data from backend:', userData);
           
           if (userData && userData.user) {
@@ -115,7 +123,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
       } else {
-        logDev('No firebase user, clearing auth');
+        // Không có Firebase user: vẫn thử verify dựa trên cookie token nếu có
+        if (hasCookieToken()) {
+          try {
+            const userData = await verifyToken();
+            if (userData && userData.user) {
+              setUser(userData.user);
+              setLoading(false);
+              return;
+            }
+          } catch (e) {
+            logDev('Cookie-based verify failed, clearing auth');
+          }
+        }
+        logDev('No firebase user and no valid cookie, clearing auth');
         clearInvalidAuth();
       }
       setLoading(false);
