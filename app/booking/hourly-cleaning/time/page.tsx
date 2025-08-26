@@ -70,14 +70,14 @@ const TimeSelectionPage = () => {
     };
     const savedBookingData = getSavedBookingData() ? JSON.parse(getSavedBookingData()!) : null;
     const [bookingData, setBookingData] = useState({
-        staffCount: savedBookingData.staffCount,
-        durationId: savedBookingData.durationId,
-        address: savedBookingData.address,
-        selectedOptionIds: savedBookingData.selectedOptionIds,
-        notes: savedBookingData.notes,
-        promoCode: savedBookingData.promoCode,
-        workDate: savedBookingData.workDate,
-        startTime: savedBookingData.startTime,
+        staffCount: savedBookingData.staffCount || 1,
+        durationId: savedBookingData.durationId || 2,
+        address: savedBookingData.address || '',
+        selectedOptionIds: savedBookingData.selectedOptionIds || [99],
+        notes: savedBookingData.notes || '',
+        promoCode: savedBookingData.promoCode || '',
+        workDate: savedBookingData.workDate || null,
+        startTime: savedBookingData.startTime || '',
     });
 
     const [checkoutResult, setCheckoutResult] = useState<any>(null);
@@ -176,8 +176,12 @@ const TimeSelectionPage = () => {
             logDev('Validation running. Current data:', {
                 address: bookingData.address,
                 durationId: bookingData.durationId,
-                isDataRestored,
-                fromServicePage,
+                staffCount: bookingData.staffCount,
+                selectedOptionIds: bookingData.selectedOptionIds,
+                notes: bookingData.notes,
+                promoCode: bookingData.promoCode,
+                workDate: bookingData.workDate,
+                startTime: bookingData.startTime,
             });
 
             // Chỉ chạy validation nếu không phải từ service page
