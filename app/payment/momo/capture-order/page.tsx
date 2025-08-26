@@ -4,6 +4,7 @@ import { useEffect, Suspense } from 'react';
 import Swal from 'sweetalert2';
 import { getVoucherCodeFromStorage } from '@/lib/paymentUtils';
 import fetchWithAuth from '@/lib/apiClient';
+import { logDev } from '@/lib/utils';
 
 function MomoCaptureOrderContent() {
     const params = useSearchParams();
@@ -11,6 +12,8 @@ function MomoCaptureOrderContent() {
     const paymentInfoString = localStorage.getItem('paymentInfo');
     const paymentInfo = paymentInfoString ? JSON.parse(paymentInfoString) : {};
     const cleanCoinUsed = paymentInfo.usedCleanCoin ?? 0;
+
+    logDev('Payment info from localStorage:', paymentInfo);
 
     useEffect(() => {
         // 1) Lấy dữ liệu MoMo trả về từ query string
