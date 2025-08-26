@@ -83,15 +83,15 @@ const CustomerDashboardPage = () => {
 
     // Load voucher summary for count
     useEffect(() => {
+        if (!user?.id) return;
         let aborted = false;
         const controller = new AbortController();
-        const run = async () => {
-            if (!user?.id) return;
+
+        (async () => {
             try {
                 const summary = await fetchVoucherSummary(controller.signal);
                 if (aborted) return;
-                const available =
-                    summary?.active ?? summary?.total ?? summary?.count ?? 0;
+                const available = summary?.active ?? summary?.total ?? summary?.count ?? 0;
                 setDashboardData((prev) => ({
                     ...prev,
                     availableVouchers: Number(available) || 0,
@@ -99,8 +99,8 @@ const CustomerDashboardPage = () => {
             } catch (e) {
                 // ignore
             }
-        };
-        run();
+        })();
+
         return () => {
             aborted = true;
             controller.abort();
@@ -128,27 +128,6 @@ const CustomerDashboardPage = () => {
             }
         })();
     }, [user?.id]);
-            walletBalance: Number(user?.rewardPoints) || 0,
-        }));
-        
-    }, [user?.id]);
-
-    // Lấy thông tin voucher
-    useEffect(() => {
-        if (!user?.id) return;
-        let mounted = true;
-        (async () => {
-          try {
-            const data = await fetchVoucherSummary();
-            if (!mounted) return;
-            const available = data?.active ?? data?.total ?? 0;
-            setDashboardData(prev => ({ ...prev, availableVouchers: Number(available) }));
-          } catch (err) {
-            console.error('Failed to load voucher summary', err);
-          }
-        })();
-        return () => { mounted = false; };
-      }, [user?.id]);
 
     // Kiểm tra trạng thái đơn đăng ký khi component mount
     useEffect(() => {
