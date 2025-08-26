@@ -63,7 +63,7 @@ const CareersPage = () => {
                             <div>
                                 <div className="aspect-w-16 aspect-h-9 relative rounded-2xl overflow-hidden shadow-xl">
                                     <img
-                                        src="https://thethaovanhoa.mediacdn.vn/372676912336973824/2023/2/24/screen-shot-2023-02-24-at-072508-1677199770611678722719.png"
+                                        src="https://th.bing.com/th/id/R.b8e2075af9fcd5e8c48121a3971ef10a?rik=yJRCcenHTW0coA&pid=ImgRaw&r=0"
                                         alt="Công việc tại cleanNow"
                                         className="w-full h-full object-cover"
                                     />
