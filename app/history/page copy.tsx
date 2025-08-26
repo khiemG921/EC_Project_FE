@@ -150,7 +150,7 @@ const JobCard: React.FC<{ job: any; onCancel: (job: any) => void; onConfirmCompl
             case 'in_progress':
                 return (
                     <div className="w-full flex flex-col sm:flex-row gap-3">
-                        <Button variant="outline" className="flex-1"><MessageSquare size={16} /> Nhắn tin</Button>
+                        {/* <Button variant="outline" className="flex-1"><MessageSquare size={16} /> Nhắn tin</Button> */}
                         <Button
                             onClick={() => onConfirmCompletion(job.job_id)}
                             disabled={!job.tasker_completed}
@@ -164,7 +164,7 @@ const JobCard: React.FC<{ job: any; onCancel: (job: any) => void; onConfirmCompl
             case 'pending':
                  return (
                     <div className="w-full flex flex-col sm:flex-row gap-3">
-                        <Button variant="outline" className="flex-1" disabled><MessageSquare size={16} /> Nhắn tin</Button>
+                        {/* <Button variant="outline" className="flex-1" disabled><MessageSquare size={16} /> Nhắn tin</Button> */}
                         <Button onClick={() => onCancel(job)} variant="destructive" className="flex-1 bg-red-50 text-red-600 hover:bg-red-100"><XCircle size={16} /> Hủy đơn</Button>
                     </div>
                  );
