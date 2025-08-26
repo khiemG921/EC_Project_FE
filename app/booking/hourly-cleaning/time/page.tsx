@@ -68,15 +68,16 @@ const TimeSelectionPage = () => {
         }
         return null;
     };
+    const savedBookingData = getSavedBookingData() ? JSON.parse(getSavedBookingData()!) : null;
     const [bookingData, setBookingData] = useState({
-        staffCount: 1,
-        durationId: 2,
-        address: '',
-        selectedOptionIds: [99],
-        notes: '',
-        promoCode: '',
-        workDate: null as Date | null,
-        startTime: '',
+        staffCount: savedBookingData.staffCount,
+        durationId: savedBookingData.durationId,
+        address: savedBookingData.address,
+        selectedOptionIds: savedBookingData.selectedOptionIds,
+        notes: savedBookingData.notes,
+        promoCode: savedBookingData.promoCode,
+        workDate: savedBookingData.workDate,
+        startTime: savedBookingData.startTime,
     });
 
     const [checkoutResult, setCheckoutResult] = useState<any>(null);

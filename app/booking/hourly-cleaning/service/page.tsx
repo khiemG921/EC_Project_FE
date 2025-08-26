@@ -77,7 +77,12 @@ const ServiceSelectionPage = () => {
                 logDev('Verified save successful:', {
                     address: parsed.address,
                     durationId: parsed.durationId,
-                    staffCount: parsed.staffCount
+                    staffCount: parsed.staffCount,
+                    selectedOptionIds: parsed.selectedOptionIds,
+                    notes: parsed.notes,
+                    promoCode: parsed.promoCode,
+                    workDate: parsed.workDate,
+                    startTime: parsed.startTime,
                 });
             }
         }
