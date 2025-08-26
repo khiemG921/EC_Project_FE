@@ -455,6 +455,7 @@ const JobCard: React.FC<JobCardProps> = ({
     onConfirmCompletion,
 }) => {
     const { tasker, service } = job;
+    const router = useRouter();
     const renderActions = () => {
         switch (status) {
             case 'completed':
@@ -468,7 +469,10 @@ const JobCard: React.FC<JobCardProps> = ({
                                 </span>
                             </div>
                         ) : (
-                            <button className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 text-sm font-semibold text-teal-600 bg-teal-50 hover:bg-teal-100 rounded-lg transition-colors">
+                            <button
+                                onClick={() => router.push(`/reviews?serviceId=${encodeURIComponent(job.service_id)}`)}
+                                className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 text-sm font-semibold text-teal-600 bg-teal-50 hover:bg-teal-100 rounded-lg transition-colors"
+                            >
                                 <Star size={16} /> Viết đánh giá
                             </button>
                         )}
