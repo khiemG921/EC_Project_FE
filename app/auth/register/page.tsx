@@ -122,7 +122,8 @@ const RegisterPage = () => {
         setError("");
         try {
             const res = await registerUser(email, password, name, phone);
-            const shouldGoOtp = Boolean((res && (res.needVerify === true)) || res?.uid || res?.message);
+            try { console.debug('[Register] Backend response:', res); } catch {}
+            const shouldGoOtp = !!(res && (res.needVerify || res?.uid || res?.message));
             if (shouldGoOtp) {
                 setStep(2);
                 setOtpDigits(Array(6).fill(""));
